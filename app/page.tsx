@@ -2,9 +2,26 @@
 
 import type React from "react"
 import { useState, useRef, useEffect } from "react"
-import { DollarSign, TrendingUp, AlertTriangle } from "lucide-react"
+import { 
+  DollarSign, 
+  TrendingUp, 
+  AlertTriangle, 
+  User, 
+  Smartphone, 
+  Package, 
+  Tag, 
+  Briefcase 
+} from "lucide-react"
 
 export default function Page() {
+  // Novos estados para os campos de identificação
+  const [nomeLead, setNomeLead] = useState("")
+  const [whatsapp, setWhatsapp] = useState("")
+  const [nomeProduto, setNomeProduto] = useState("")
+  const [tipoProduto, setTipoProduto] = useState("")
+  const [nicho, setNicho] = useState("")
+
+  // Estados originais da calculadora
   const [faturamento, setFaturamento] = useState("")
   const [ticketMedio, setTicketMedio] = useState("")
   const [modoDetalhado, setModoDetalhado] = useState(false)
@@ -140,12 +157,22 @@ export default function Page() {
     setCarrinhosAbandonados(value)
   }
 
+  const handleWhatsappChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setWhatsapp(e.target.value)
+  }
+
   const calcular = () => {
+    // --- NOVA VALIDAÇÃO: CAMPOS OBRIGATÓRIOS (Nome e WhatsApp) ---
+    if (!nomeLead.trim() || !whatsapp.trim()) {
+      alert("Por favor, preencha seu Nome e Número de WhatsApp para realizar o cálculo.")
+      return
+    }
+
     const fat = parseCurrency(faturamento)
     const ticket = parseCurrency(ticketMedio)
 
     if (fat <= 0 || ticket <= 0) {
-      alert("Por favor, preencha os valores corretamente.")
+      alert("Por favor, preencha os valores de faturamento e ticket corretamente.")
       return
     }
 
@@ -157,7 +184,7 @@ export default function Page() {
       const carrinhosInput = Number(carrinhosAbandonados)
 
       if (vendasInput <= 0 || carrinhosInput <= 0) {
-        alert("Por favor, preencha todos os campos corretamente.")
+        alert("Por favor, preencha todos os campos detalhados corretamente.")
         return
       }
 
@@ -235,7 +262,7 @@ export default function Page() {
 
         {/* Seção de Entradas */}
         <div className="bg-[#111816] rounded-2xl p-8 mb-8 border border-[#1a2520]">
-          {/* Alteração Mobile: flex-col-reverse para botões em cima, text-center para centralizar */}
+          {/* Cabeçalho das Entradas */}
           <div className="flex flex-col-reverse md:flex-row items-center md:items-start justify-between mb-6 gap-6 md:gap-0">
             <div className="text-center md:text-left">
               <h2 className="text-xl font-semibold mb-2">Dados do seu negócio</h2>
@@ -263,11 +290,90 @@ export default function Page() {
           </div>
 
           <div className="grid md:grid-cols-2 gap-6 mb-6">
+            
+            {/* === CAMPOS DE IDENTIFICAÇÃO === */}
+            
+            {/* Nome (Obrigatório) */}
             <div>
-              {/* Centralização do Label e do Input no Mobile */}
+              <label className="flex items-center justify-center md:justify-start gap-2 text-[#7ef542] text-sm mb-2">
+                <User className="w-4 h-4" />
+                Nome <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={nomeLead}
+                onChange={(e) => setNomeLead(e.target.value)}
+                placeholder="Seu nome completo"
+                className="w-full bg-[#0a0f0d] border border-[#1a2520] rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#7ef542] transition-colors text-center md:text-left"
+              />
+            </div>
+
+            {/* WhatsApp (Obrigatório) */}
+            <div>
+              <label className="flex items-center justify-center md:justify-start gap-2 text-[#7ef542] text-sm mb-2">
+                <Smartphone className="w-4 h-4" />
+                Nº Whatsapp <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={whatsapp}
+                onChange={handleWhatsappChange}
+                placeholder="(00) 00000-0000"
+                className="w-full bg-[#0a0f0d] border border-[#1a2520] rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#7ef542] transition-colors text-center md:text-left"
+              />
+            </div>
+
+            {/* Nome do Produto (Opcional) */}
+            <div>
+              <label className="flex items-center justify-center md:justify-start gap-2 text-[#7ef542] text-sm mb-2">
+                <Package className="w-4 h-4" />
+                Nome do Produto
+              </label>
+              <input
+                type="text"
+                value={nomeProduto}
+                onChange={(e) => setNomeProduto(e.target.value)}
+                placeholder="Ex: Método X (Opcional)"
+                className="w-full bg-[#0a0f0d] border border-[#1a2520] rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#7ef542] transition-colors text-center md:text-left"
+              />
+            </div>
+
+            {/* Tipo de Produto (Opcional) */}
+            <div>
+              <label className="flex items-center justify-center md:justify-start gap-2 text-[#7ef542] text-sm mb-2">
+                <Tag className="w-4 h-4" />
+                Tipo de Produto
+              </label>
+              <input
+                type="text"
+                value={tipoProduto}
+                onChange={(e) => setTipoProduto(e.target.value)}
+                placeholder="Ex: Curso, Mentoria (Opcional)"
+                className="w-full bg-[#0a0f0d] border border-[#1a2520] rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#7ef542] transition-colors text-center md:text-left"
+              />
+            </div>
+
+            {/* Nicho de Atuação (Opcional) */}
+            <div className="md:col-span-2">
+              <label className="flex items-center justify-center md:justify-start gap-2 text-[#7ef542] text-sm mb-2">
+                <Briefcase className="w-4 h-4" />
+                Nicho de Atuação
+              </label>
+              <input
+                type="text"
+                value={nicho}
+                onChange={(e) => setNicho(e.target.value)}
+                placeholder="Ex: Saúde, Finanças (Opcional)"
+                className="w-full bg-[#0a0f0d] border border-[#1a2520] rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#7ef542] transition-colors text-center md:text-left"
+              />
+            </div>
+
+            {/* === CAMPOS DE CÁLCULO === */}
+
+            <div>
               <label className="flex items-center justify-center md:justify-start gap-2 text-[#7ef542] text-sm mb-2">
                 <DollarSign className="w-4 h-4" />
-                Faturamento mensal
+                Faturamento mensal <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">R$</span>
@@ -294,7 +400,7 @@ export default function Page() {
             <div>
               <label className="flex items-center justify-center md:justify-start gap-2 text-[#7ef542] text-sm mb-2">
                 <TrendingUp className="w-4 h-4" />
-                Ticket médio do produto
+                Ticket médio do produto <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">R$</span>
@@ -323,7 +429,7 @@ export default function Page() {
                 <div>
                   <label className="flex items-center justify-center md:justify-start gap-2 text-[#7ef542] text-sm mb-2">
                     <TrendingUp className="w-4 h-4" />
-                    Número de vendas realizadas no mês
+                    Número de vendas realizadas no mês <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -365,8 +471,8 @@ export default function Page() {
             Calcular meu lucro perdido
           </button>
 
+          {/* ... Avisos do modo simplificado/detalhado permanecem aqui (sem alterações) ... */}
           {!modoDetalhado && (
-            // Centralização do container de Aviso no Mobile
             <div className="mt-6 bg-[#111816] rounded-2xl p-8 border border-yellow-600/30 text-center md:text-left">
               <div className="flex flex-col md:flex-row items-center md:items-start gap-3 mb-4">
                 <AlertTriangle className="w-5 h-5 text-yellow-500 flex-shrink-0 mt-1" />
@@ -450,7 +556,6 @@ export default function Page() {
           )}
 
           {modoDetalhado && (
-            // Centralização do container de Aviso (Detalhado) no Mobile
             <div className="mt-6 bg-[#111816] rounded-2xl p-8 border border-yellow-600/30 text-center md:text-left">
               <div className="flex flex-col md:flex-row items-center md:items-start gap-3 mb-4">
                 <AlertTriangle className="w-5 h-5 text-yellow-500 flex-shrink-0 mt-1" />
@@ -511,7 +616,6 @@ export default function Page() {
         {resultados && (
           <>
             <div ref={resultadosRef} className="bg-[#111816] rounded-2xl p-8 mb-8 border border-[#1a2520]">
-              {/* Cabeçalho de Resultados Centralizado no Mobile */}
               <div className="flex flex-col md:flex-row items-center md:items-start md:justify-between gap-6 mb-8 text-center md:text-left">
                 <div className="flex flex-col md:flex-row items-center md:items-start gap-3">
                   <AlertTriangle className="w-6 h-6 text-[#7ef542] flex-shrink-0" />
@@ -756,10 +860,10 @@ export default function Page() {
             {/* Seção Unificada: Frases de Impacto (Mensal e Anual) */}
             <div className="mt-16 bg-[#111816] rounded-2xl p-8 md:p-10 border border-[#1a2520]">
               <div className="grid md:grid-cols-2 gap-10 items-center">
-                {/* Frase 1: Mensal */}
+                {/* Frase 1: Mensal - PERSONALIZADA */}
                 <div>
                   <h3 className="text-3xl md:text-4xl font-bold leading-tight text-center">
-                    Faria diferença pra você hoje ter mais{" "}
+                    {nomeLead}, faria diferença pra você hoje ter mais{" "}
                     <span className="text-[#7ef542]">{formatResultCurrency(resultados.recuperacao10.mensal)}</span> no
                     seu bolso todo mês?
                   </h3>
@@ -927,118 +1031,10 @@ export default function Page() {
               </div>
             </div>
 
-            {/* Seção de Números/Casos de Sucesso */}
-            <div className="mt-12">
-              <div className="text-center mb-8">
-                <h3 className="text-2xl font-bold mb-2">Veja alguns números</h3>
-                <p className="text-gray-400">Resultados reais de quem ja confia na Recupera.ia</p>
-              </div>
-
-              <div className="grid md:grid-cols-3 gap-6">
-                {/* Card 1 - Comunidade Online */}
-                <div className="bg-[#111816] rounded-2xl p-6 border border-[#1a2520] hover:border-[#7ef542]/30 transition-all">
-                  <div className="mb-6">
-                    <h4 className="text-lg font-bold text-white mb-1">Comunidade Online</h4>
-                    <p className="text-sm text-gray-400">(Área de Membros)</p>
-                  </div>
-
-                  <div className="mb-4">
-                    <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide mb-2">O Cenário:</p>
-                    <p className="text-sm text-gray-300 text-[13px]">
-                      R$ 116.955,00 em assinaturas não concluídas. Todos os meses.
-                    </p>
-                  </div>
-
-                  <div className="mb-4">
-                    <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide mb-2">O Resultado:</p>
-                    <p className="text-sm text-gray-300 mb-3">
-                      Em apenas um mês, a Recupera.ia colocou{" "}
-                      <span className="text-[#7ef542] font-semibold">R$ 35.866,20</span> de volta no caixa do cliente,
-                      recuperando <span className="text-white font-semibold">138 leads</span> que já eram considerados
-                      perdidos.
-                    </p>
-                    <div className="bg-[#7ef542]/10 border border-[#7ef542]/30 rounded-lg p-3">
-                      <p className="text-[#7ef542] font-bold text-center">Taxa de Conversão de 30,66%</p>
-                    </div>
-                  </div>
-
-                  <blockquote className="text-xs text-gray-400 italic border-l-2 border-[#7ef542]/30 pl-3 mt-4">
-                    "É um dinheiro que simplesmente não existia para nós. A Recupera.ia não só pagou o investimento no
-                    primeiro dia, como criou uma nova fonte de receita que não nos custa nenhum esforço para gerir."
-                  </blockquote>
-                </div>
-
-                {/* Card 2 - E-commerce */}
-                <div className="bg-[#111816] rounded-2xl p-6 border border-[#1a2520] hover:border-[#7ef542]/30 transition-all">
-                  <div className="mb-6">
-                    <h4 className="text-lg font-bold text-white mb-1">E-commerce</h4>
-                    <p className="text-sm text-gray-400">Livros Físicos</p>
-                  </div>
-
-                  <div className="mb-4">
-                    <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide mb-2">O Cenário:</p>
-                    <p className="text-sm text-gray-300 text-[13px]">
-                      R$ 32.040,00 em potencial de vendas evaporando a cada 30 dias.
-                    </p>
-                  </div>
-
-                  <div className="mb-4">
-                    <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide mb-2">O Resultado:</p>
-                    <p className="text-sm text-gray-300 mb-3">
-                      Nossa IA Conversacional recuperou <span className="text-white font-semibold">107 clientes</span>,
-                      gerando <span className="text-[#7ef542] font-semibold">R$ 19.260,00</span> em faturamento extra e
-                      atingindo uma taxa de conversão que nenhuma outra ferramenta chegou perto.
-                    </p>
-                    <div className="bg-[#7ef542]/10 border border-[#7ef542]/30 rounded-lg p-3">
-                      <p className="text-[#7ef542] font-bold text-center">Taxa de Conversão de 60,11%</p>
-                    </div>
-                  </div>
-
-                  <blockquote className="text-xs text-gray-400 italic border-l-2 border-[#7ef542]/30 pl-3 mt-4">
-                    "Ver 6 em cada 10 pessoas que abandonaram o carrinho voltando para comprar foi inacreditável. A
-                    Recupera.ia não é uma ferramenta de recuperação, é uma máquina de conversão."
-                  </blockquote>
-                </div>
-
-                {/* Card 3 - Plataforma de Apostas */}
-                <div className="bg-[#111816] rounded-2xl p-6 border border-[#1a2520] hover:border-[#7ef542]/30 transition-all">
-                  <div className="mb-6">
-                    <h4 className="text-lg font-bold text-white mb-1">Plataforma de Alto</h4>
-                    <p className="text-sm text-gray-400">Volume (Apostas)</p>
-                  </div>
-
-                  <div className="mb-4">
-                    <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide mb-2">O Cenário:</p>
-                    <p className="text-sm text-gray-300 text-[13px]">
-                      Um vazamento massivo de mais de R$ 715.000,00 por mês em depósitos não realizados.
-                    </p>
-                  </div>
-
-                  <div className="mb-4">
-                    <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide mb-2">O Resultado:</p>
-                    <p className="text-sm text-gray-300 mb-3">
-                      Mesmo com um ticket baixo, nosso fluxo recuperou{" "}
-                      <span className="text-white font-semibold">13.745 usuários</span>, injetando{" "}
-                      <span className="text-[#7ef542] font-semibold">R$ 68.725,00</span> de receita adicional que antes
-                      era completamente perdida.
-                    </p>
-                    <div className="bg-[#7ef542]/10 border border-[#7ef542]/30 rounded-lg p-3">
-                      <p className="text-[#7ef542] font-bold text-center">+13 mil recuperados em 30 dias</p>
-                    </div>
-                  </div>
-
-                  <blockquote className="text-xs text-gray-400 italic border-l-2 border-[#7ef542]/30 pl-3 mt-4">
-                    "No nosso volume, cada ponto percentual importa. A Recupera.ia nos entregou quase 10% de conversão
-                    sobre um público que já tínhamos desistido. É lucro puro, na escala que precisamos."
-                  </blockquote>
-                </div>
-              </div>
-            </div>
-
             <div className="mt-12 bg-[#111816] rounded-2xl p-8 border border-[#1a2520]">
               <div className="text-center mb-8">
                 <h3 className="text-xl md:text-3xl font-bold leading-tight">
-                  E se eu dissesse que você também pode ter esse resultado?
+                  {nomeLead}, e se eu dissesse que você também pode ter esse resultado?
                   <br />E o melhor: <span className="text-[#7ef542]">de graça!</span>
                 </h3>
               </div>
