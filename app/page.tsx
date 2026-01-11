@@ -1003,14 +1003,18 @@ export default function Page() {
                     </div>
                   </div>
 
+                  {/* === ALTERAÇÃO ESTRATÉGICA AQUI: Logo inserida no Card 4 (Fundo Claro) === */}
                   <div className="bg-gradient-to-br from-[#7ef542]/10 to-[#7ef542]/5 rounded-xl p-6 border-2 border-[#7ef542] hover:border-[#6ee032] transition-all hover:shadow-lg">
                     <div className="flex items-start gap-3 mb-3">
                       <div className="w-10 h-10 bg-[#7ef542] rounded-full flex items-center justify-center flex-shrink-0 text-xl font-bold">
                         4
                       </div>
-                      <h4 className="text-xl font-bold text-[#0a0f0d]">
-                        Recupera.ia: A Tecnologia para Estancar o Vazamento
-                      </h4>
+                      <div className="flex flex-col">
+                        <img src="/Wordmark Fundo Claro.png" alt="Recupera.ia" className="h-8 w-auto mb-2 self-start" />
+                        <h4 className="text-xl font-bold text-[#0a0f0d]">
+                          A Tecnologia para Estancar o Vazamento
+                        </h4>
+                      </div>
                     </div>
                     <p className="text-gray-700 text-sm leading-relaxed mb-3">
                       A Recupera.ia surge para garantir que você pare de depender exclusivamente da entrada de novos
@@ -1027,6 +1031,7 @@ export default function Page() {
                       </p>
                     </div>
                   </div>
+                  {/* ========================================================================= */}
                 </div>
 
                 <div className="pt-6 border-t-2 border-gray-200 mb-6">
