@@ -851,20 +851,7 @@ export default function Page() {
                 </div>
 
                 {/* Lado Direito - Card 10% */}
-                <div className="bg-[#0a0f0d] rounded-2xl p-6 border-2 border-[#7ef542]">
-                  <div className="mb-4">
-                    <h4 className="text-lg font-semibold uppercase font-bold text-[20px]">
-                      Com 10% de Taxa de Conversão
-                    </h4>
-                  </div>
-
-                  <div>
-                    <p className="text-xs text-gray-500 mb-1">Possibilidade de Ganho Mensal</p>
-                    <p className="text-2xl font-bold text-[#7ef542]">
-                      +{formatResultCurrency(resultados.recuperacao10.mensal)}
-                    </p>
-                  </div>
-                </div>
+                
               </div>
             </div>
 
@@ -872,20 +859,7 @@ export default function Page() {
             <div className="mt-8 bg-[#111816] rounded-2xl p-8 border border-[#1a2520]">
               <div className="grid md:grid-cols-2 gap-8 items-center">
                 {/* Lado Esquerdo - Card 10% */}
-                <div className="bg-[#0a0f0d] rounded-2xl p-6 border-2 border-[#7ef542]">
-                  <div className="mb-4">
-                    <h4 className="text-lg font-semibold uppercase font-bold text-[20px]">
-                      Com 10% de Taxa de Conversão
-                    </h4>
-                  </div>
-
-                  <div>
-                    <p className="text-xs text-gray-500 mb-1">Possibilidade de Ganho Anual</p>
-                    <p className="text-xl font-semibold text-[#7ef542] text-[24px] font-bold">
-                      +{formatResultCurrency(resultados.recuperacao10.anual)}
-                    </p>
-                  </div>
-                </div>
+                
 
                 {/* Lado Direito - Headline */}
                 <div>
@@ -1081,9 +1055,7 @@ export default function Page() {
                   <p className="text-2xl font-bold text-[#0a0f0d] mb-4">
                     Você está pronto para parar de desperdiçar dinheiro e começar a recuperar o que já é seu?
                   </p>
-                  <div className="inline-block bg-[#7ef542] text-[#0a0f0d] px-8 py-3 rounded-full font-bold text-lg uppercase tracking-wide hover:bg-[#6ee032] transition-colors cursor-pointer">
-                    👇 Veja os resultados reais abaixo
-                  </div>
+                  
                 </div>
               </div>
             </div>
