@@ -1045,7 +1045,7 @@ export default function Page() {
 
               <div className="mt-8">
                 <a
-                  href="https://wa.me/5519983233544?text=Quero%20recuperar%20meu%20lucro%20perdido"
+                  href="https://wa.me/5519936196347?text=Quero%20recuperar%20meu%20lucro%20perdido"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-full bg-[#7ef542] hover:bg-[#6ee032] text-[#0a0f0d] font-bold py-6 px-8 rounded-lg transition-colors text-center block no-underline"
