@@ -443,46 +443,7 @@ export default function Page() {
                   </p>
                 </div>
 
-                <div className="pt-4 border-t border-[#1a2520]">
-                  <h5 className="text-white font-semibold mb-3 text-xs">Referências Técnicas e Fontes de Dados</h5>
-                  <ul className="space-y-1 text-xs text-gray-500">
-                    <li>
-                      • <span className="text-gray-400">Ref 1:</span> Hotmart Insights / Guia Estratégico: Dados sobre a
-                      Razão Abandono por Venda e benchmarks de performance.{" "}
-                      <a href="#" className="text-[#7ef542] hover:underline">
-                        Acesse a Fonte Aqui
-                      </a>
-                    </li>
-                    <li>
-                      • <span className="text-gray-400">Ref 2:</span> Checkout de Alta Conversão (Heroes Park Academy):
-                      Dados sobre a camada oculta de pagamentos e perdas por recusa de cartão.{" "}
-                      <a href="#" className="text-[#7ef542] hover:underline">
-                        Acesse a Fonte Aqui
-                      </a>
-                    </li>
-                    <li>
-                      • <span className="text-gray-400">Ref 3:</span> PCMI (Payments and Commerce Market Intelligence):
-                      Estatísticas sobre a conversão de PIX e tendências de meios de pagamento no Brasil.{" "}
-                      <a href="#" className="text-[#7ef542] hover:underline">
-                        Acesse a Fonte Aqui
-                      </a>
-                    </li>
-                    <li>
-                      • <span className="text-gray-400">Ref 4:</span> Relatórios ABComm / Monitor Mercantil: Pesquisas
-                      sobre o percentual de abandono no cenário nacional.{" "}
-                      <a href="#" className="text-[#7ef542] hover:underline">
-                        Acesse a Fonte Aqui
-                      </a>
-                    </li>
-                    <li>
-                      • <span className="text-gray-400">Ref 5:</span> Taxa de Conversão Média (Comunidade
-                      MarketingDigitalBR): Análise de conversão de checkout e comportamentos de usuários.{" "}
-                      <a href="#" className="text-[#7ef542] hover:underline">
-                        Acesse a Fonte Aqui
-                      </a>
-                    </li>
-                  </ul>
-                </div>
+                
               </div>
             </div>
           )}
@@ -540,39 +501,7 @@ export default function Page() {
                   </p>
                 </div>
 
-                <div className="pt-4 border-t border-[#1a2520]">
-                  <h5 className="text-white font-semibold mb-3 text-xs">Referências Técnicas e Fontes de Dados</h5>
-                  <ul className="space-y-1 text-xs text-gray-500">
-                    <li>
-                      • <span className="text-gray-400">Ref 1:</span> Hotmart Insights / Guia Estratégico: Dados sobre a
-                      Razão Abandono por Venda (R<sub>a/v</sub>) e benchmarks de performance.{" "}
-                      <a href="#" className="text-[#7ef542] hover:underline">
-                        Acesse a Fonte Aqui
-                      </a>
-                    </li>
-                    <li>
-                      • <span className="text-gray-400">Ref 2:</span> Checkout de Alta Conversão (Heroes Park Academy):
-                      Análise da camada oculta de pagamentos e perdas por recusa de cartão.{" "}
-                      <a href="#" className="text-[#7ef542] hover:underline">
-                        Acesse a Fonte Aqui
-                      </a>
-                    </li>
-                    <li>
-                      • <span className="text-gray-400">Ref 3:</span> PCMI (Payments and Commerce Market Intelligence):
-                      Estatísticas sobre conversão de PIX e tendências de meios de pagamento no Brasil.{" "}
-                      <a href="#" className="text-[#7ef542] hover:underline">
-                        Acesse a Fonte Aqui
-                      </a>
-                    </li>
-                    <li>
-                      • <span className="text-gray-400">Ref 4:</span> Relatórios ABComm / Monitor Mercantil: Pesquisas
-                      sobre o percentual de abandono no cenário nacional.{" "}
-                      <a href="#" className="text-[#7ef542] hover:underline">
-                        Acesse a Fonte Aqui
-                      </a>
-                    </li>
-                  </ul>
-                </div>
+                
               </div>
             </div>
           )}
@@ -605,9 +534,7 @@ export default function Page() {
               <div className="space-y-4 mb-6">
                 {/* Passo 1: Vendas */}
                 <div className="relative">
-                  <div className="absolute -left-8 top-1/2 -translate-y-1/2 w-10 h-10 bg-[#7ef542] rounded-full flex items-center justify-center font-bold text-[#0a0f0d] text-sm">
-                    1
-                  </div>
+                  
                   <div className="bg-[#0a0f0d] rounded-xl p-6 border border-[#1a2520] hover:border-[#7ef542]/30 transition-all">
                     <div className="flex items-center justify-between">
                       <div>
@@ -628,9 +555,7 @@ export default function Page() {
 
                 {/* Passo 2: Oportunidades */}
                 <div className="relative">
-                  <div className="absolute -left-8 top-1/2 -translate-y-1/2 w-10 h-10 bg-[#7ef542] rounded-full flex items-center justify-center font-bold text-[#0a0f0d] text-sm">
-                    2
-                  </div>
+                  
                   <div className="bg-[#0a0f0d] rounded-xl p-6 border border-[#1a2520] hover:border-[#7ef542]/30 transition-all">
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
@@ -658,9 +583,7 @@ export default function Page() {
 
                 {/* Passo 3: Valor Mensal */}
                 <div className="relative">
-                  <div className="absolute -left-8 top-1/2 -translate-y-1/2 w-10 h-10 bg-[#7ef542] rounded-full flex items-center justify-center font-bold text-[#0a0f0d] text-sm">
-                    3
-                  </div>
+                  
                   <div className="bg-[#0a0f0d] rounded-xl p-6 border border-[#1a2520] hover:border-[#7ef542]/30 transition-all">
                     <div className="flex items-center justify-between">
                       <div>
@@ -686,9 +609,7 @@ export default function Page() {
 
                 {/* Passo 4: Valor Anual */}
                 <div className="relative">
-                  <div className="absolute -left-8 top-1/2 -translate-y-1/2 w-10 h-10 bg-[#7ef542] rounded-full flex items-center justify-center font-bold text-[#0a0f0d] text-sm">
-                    4
-                  </div>
+                  
                   <div className="bg-[#0a0f0d] rounded-xl p-6 border border-[#1a2520] hover:border-[#7ef542]/30 transition-all">
                     <div className="flex items-center justify-between">
                       <div>
@@ -714,9 +635,7 @@ export default function Page() {
 
                 {/* Passo 5: Multiplicador */}
                 <div className="relative">
-                  <div className="absolute -left-8 top-1/2 -translate-y-1/2 w-10 h-10 bg-[#7ef542] rounded-full flex items-center justify-center font-bold text-[#0a0f0d] text-sm">
-                    5
-                  </div>
+                  
                   <div className="bg-gradient-to-br from-[#7ef542]/20 to-[#7ef542]/5 rounded-xl p-6 border-2 border-[#7ef542] hover:border-[#7ef542] transition-all">
                     <div className="flex items-center justify-between">
                       <div>
@@ -838,35 +757,24 @@ export default function Page() {
               Recupera.ia
             </p>
 
-            {/* Nova Seção - Garantia */}
-            <div className="mt-16 bg-[#111816] rounded-2xl p-8 border border-[#1a2520]">
-              <div className="grid md:grid-cols-2 gap-8 items-center">
-                {/* Lado Esquerdo - Headline */}
+            {/* Seção Unificada: Frases de Impacto (Mensal e Anual) */}
+            <div className="mt-16 bg-[#111816] rounded-2xl p-8 md:p-10 border border-[#1a2520]">
+              <div className="grid md:grid-cols-2 gap-10 items-center">
+                {/* Frase 1: Mensal */}
                 <div>
-                  <h3 className="text-3xl md:text-4xl font-bold leading-tight">
+                  <h3 className="text-3xl md:text-4xl font-bold leading-tight text-center">
                     Faria diferença pra você hoje ter mais{" "}
                     <span className="text-[#7ef542]">{formatResultCurrency(resultados.recuperacao10.mensal)}</span> no
                     seu bolso todo mês?
                   </h3>
                 </div>
 
-                {/* Lado Direito - Card 10% */}
-                
-              </div>
-            </div>
-
-            {/* Nova Seção - Sonho Anual */}
-            <div className="mt-8 bg-[#111816] rounded-2xl p-8 border border-[#1a2520]">
-              <div className="grid md:grid-cols-2 gap-8 items-center">
-                {/* Lado Esquerdo - Card 10% */}
-                
-
-                {/* Lado Direito - Headline */}
-                <div>
-                  <h3 className="text-3xl md:text-4xl font-bold leading-tight">
+                {/* Frase 2: Anual */}
+                <div className="md:border-l md:border-[#1a2520] md:pl-10">
+                  <h3 className="text-3xl md:text-4xl font-bold leading-tight text-center">
                     E acumular{" "}
                     <span className="text-[#7ef542]">{formatResultCurrency(resultados.recuperacao10.anual)}</span> para
-                    a realização daquele sonho adiado tantas vezes seria espetacular não seria?
+                    a realização daquele sonho adiado tantas vezes seria espetacular, não seria?
                   </h3>
                 </div>
               </div>
@@ -879,7 +787,9 @@ export default function Page() {
                     💡 A Verdade que Ninguém Te Conta
                   </div>
                   <h3 className="text-3xl md:text-4xl font-bold text-[#0a0f0d] leading-tight mb-3">
-                    A Lógica da Eficiência: Por que você ignora o lucro que já está "em casa"?
+                    A Lógica da Eficiência
+                    <br />
+                    Por que você ignora o lucro que já está "em casa"?
                   </h3>
                   <p className="text-lg text-gray-700 max-w-4xl mx-auto">
                     No mercado de infoprodutos atual, o lucro real não está em quem você ainda vai atrair, mas em parar
@@ -930,7 +840,9 @@ export default function Page() {
                         2
                       </div>
                       <h4 className="text-xl font-bold text-[#0a0f0d]">
-                        O Lead mais Quente (e mais Negligenciado) da Operação
+                        O Lead mais Quente da Operação
+                        <br />
+                      é o Mais Negligenciado
                       </h4>
                     </div>
                     <p className="text-gray-700 text-sm leading-relaxed mb-3">
@@ -956,7 +868,9 @@ export default function Page() {
                         3
                       </div>
                       <h4 className="text-xl font-bold text-[#0a0f0d]">
-                        O Lucro Invisível: O Resultado está "Dentro de Casa"
+                        O Lucro Invisível:
+                        <br />
+                        O Resultado está "Dentro de Casa"
                       </h4>
                     </div>
                     <p className="text-gray-700 text-sm leading-relaxed mb-3">
@@ -977,82 +891,42 @@ export default function Page() {
                     </div>
                   </div>
 
-                  {/* === ALTERAÇÃO ESTRATÉGICA AQUI: Logo inserida no Card 4 (Fundo Claro) === */}
-                  <div className="bg-gradient-to-br from-[#7ef542]/10 to-[#7ef542]/5 rounded-xl p-6 border-2 border-[#7ef542] hover:border-[#6ee032] transition-all hover:shadow-lg">
+                  {/* Card 4 Alterado: Fundo Escuro e Texto Branco */}
+                  <div className="bg-[#111816] rounded-xl p-6 border-2 border-[#7ef542] hover:border-[#6ee032] transition-all hover:shadow-[0_0_20px_rgba(126,245,66,0.2)]">
                     <div className="flex items-start gap-3 mb-3">
-                      <div className="w-10 h-10 bg-[#7ef542] rounded-full flex items-center justify-center flex-shrink-0 text-xl font-bold">
+                      <div className="w-10 h-10 bg-[#7ef542] rounded-full flex items-center justify-center flex-shrink-0 text-xl font-bold text-[#0a0f0d]">
                         4
                       </div>
                       <div className="flex flex-col">
-                        <img src="/Wordmark Fundo Claro.png" alt="Recupera.ia" className="h-8 w-auto mb-2 self-start" />
-                        <h4 className="text-xl font-bold text-[#0a0f0d]">
+                        {/* Nota: Se a logo "Wordmark Fundo Claro" for escura, considere usar a versão transparente ou branca aqui */}
+                        <img src="/logo-recupera-transparent.png" alt="Recupera.ia" className="h-8 w-auto mb-2 self-start" />
+                        <h4 className="font-bold text-white">
                           A Tecnologia para Estancar o Vazamento
                         </h4>
                       </div>
                     </div>
-                    <p className="text-gray-700 text-sm leading-relaxed mb-3">
+                    <p className="text-gray-300 text-sm leading-relaxed mb-3">
                       A Recupera.ia surge para garantir que você pare de depender exclusivamente da entrada de novos
                       leads e passe a extrair o lucro máximo da base que já possui.
                     </p>
-                    <p className="text-gray-700 text-sm leading-relaxed mb-3">
+                    <p className="text-gray-300 text-sm leading-relaxed mb-3">
                       Atuamos diretamente na "camada oculta" de processamento, onde as plataformas convencionais falham
                       em intervir de forma humanizada e rápida.
                     </p>
-                    <div className="bg-green-50 border-l-4 border-[#7ef542] p-3 rounded">
-                      <p className="text-xs text-green-900 font-semibold">
+                    <div className="bg-[#7ef542]/10 border-l-4 border-[#7ef542] p-3 rounded">
+                      <p className="text-xs text-white font-semibold">
                         ✅ Através de estratégias ativas via API oficial do WhatsApp, resolvemos as recusas técnicas de
-                        cartão e a inércia do Pix/Boleto, elevando o seu faturamento com leads que você ja tem.
+                        cartão e a inércia do Pix/Boleto, elevando o seu faturamento com leads que você já tem.
                       </p>
                     </div>
                   </div>
                   {/* ========================================================================= */}
                 </div>
 
-                <div className="pt-6 border-t-2 border-gray-200 mb-6">
-                  <h5 className="text-lg font-bold text-[#0a0f0d] mb-4 text-center">
-                    Referências Técnicas e Fontes de Dados
-                  </h5>
-                  <div className="grid md:grid-cols-2 gap-3 text-xs text-gray-600">
-                    <div className="flex items-start gap-2">
-                      <span className="font-semibold text-[#0a0f0d]">Ref 1:</span>
-                      <p>
-                        Hotmart Insights / Guia Estratégico: Dados sobre a razão de abandono por venda (R<sub>a/v</sub>)
-                        e performance em infoprodutos.
-                      </p>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <span className="font-semibold text-[#0a0f0d]">Ref 2:</span>
-                      <p>
-                        PCMI (Payments and Commerce Market Intelligence): Estatísticas sobre a conversão de Pix e
-                        tendências de meios de pagamento no Brasil.
-                      </p>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <span className="font-semibold text-[#0a0f0d]">Ref 3:</span>
-                      <p>
-                        Heroes Park Academy / Checkout de Alta Conversão: Dados sobre a camada oculta de pagamentos e
-                        perdas por recusa de cartão.
-                      </p>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <span className="font-semibold text-[#0a0f0d]">Ref 4:</span>
-                      <p>
-                        Monitor Mercantil / ABComm: Pesquisas sobre o percentual de abandono de carrinhos no cenário
-                        nacional.
-                      </p>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <span className="font-semibold text-[#0a0f0d]">Ref 5:</span>
-                      <p>
-                        Comunidade MarketingDigitalBR: Benchmarks de conversão de funil completo para o mercado de
-                        produtos digitais.
-                      </p>
-                    </div>
-                  </div>
-                </div>
+                
 
                 <div className="text-center pt-6 border-t-2 border-gray-200">
-                  <p className="text-2xl font-bold text-[#0a0f0d] mb-4">
+                  <p className="text-xl font-bold text-[#0a0f0d] mb-4">
                     Você está pronto para parar de desperdiçar dinheiro e começar a recuperar o que já é seu?
                   </p>
                   
@@ -1170,18 +1044,23 @@ export default function Page() {
 
             <div className="mt-12 bg-[#111816] rounded-2xl p-8 border border-[#1a2520]">
               <div className="text-center mb-8">
-                <h3 className="text-3xl md:text-4xl font-bold leading-tight">
-                  E se eu dissesse que você também pode ter esse resultado?
-                  <br />E o melhor: <span className="text-[#7ef542]">de graça!</span>
-                </h3>
+                <h3 className="text-xl md:text-3xl font-bold leading-tight">
+  E se eu dissesse que você também pode ter esse resultado?
+  <br />E o melhor: <span className="text-[#7ef542]">de graça!</span>
+</h3>
               </div>
 
               <div className="mt-8">
-                <button className="w-full bg-[#7ef542] hover:bg-[#6ee032] text-[#0a0f0d] font-bold py-6 px-8 rounded-lg transition-colors text-center">
+                <a
+                  href="https://wa.me/5519983233544?text=Quero%20recuperar%20meu%20lucro%20perdido"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full bg-[#7ef542] hover:bg-[#6ee032] text-[#0a0f0d] font-bold py-6 px-8 rounded-lg transition-colors text-center block no-underline"
+                >
                   <span className="uppercase md:text-base leading-tight block text-[24px]">
                     Quero {formatResultCurrency(resultados.recuperacao10.mensal)} a mais no meu bolso todos os meses
                   </span>
-                </button>
+                </a>
               </div>
             </div>
           </>
