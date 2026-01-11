@@ -235,8 +235,9 @@ export default function Page() {
 
         {/* Seção de Entradas */}
         <div className="bg-[#111816] rounded-2xl p-8 mb-8 border border-[#1a2520]">
-          <div className="flex items-start justify-between mb-6">
-            <div>
+          {/* Alteração Mobile: flex-col-reverse para botões em cima, text-center para centralizar */}
+          <div className="flex flex-col-reverse md:flex-row items-center md:items-start justify-between mb-6 gap-6 md:gap-0">
+            <div className="text-center md:text-left">
               <h2 className="text-xl font-semibold mb-2">Dados do seu negócio</h2>
               <p className="text-gray-400 text-sm">Preencha as informações abaixo para calcular</p>
             </div>
@@ -263,7 +264,8 @@ export default function Page() {
 
           <div className="grid md:grid-cols-2 gap-6 mb-6">
             <div>
-              <label className="flex items-center gap-2 text-[#7ef542] text-sm mb-2">
+              {/* Centralização do Label e do Input no Mobile */}
+              <label className="flex items-center justify-center md:justify-start gap-2 text-[#7ef542] text-sm mb-2">
                 <DollarSign className="w-4 h-4" />
                 Faturamento mensal
               </label>
@@ -284,13 +286,13 @@ export default function Page() {
                   }}
                   onBlur={calcularCampoAutomatico}
                   placeholder="50.000,00"
-                  className="w-full bg-[#0a0f0d] border border-[#1a2520] rounded-lg px-4 pl-12 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#7ef542] transition-colors"
+                  className="w-full bg-[#0a0f0d] border border-[#1a2520] rounded-lg px-4 pl-12 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#7ef542] transition-colors text-center md:text-left"
                 />
               </div>
             </div>
 
             <div>
-              <label className="flex items-center gap-2 text-[#7ef542] text-sm mb-2">
+              <label className="flex items-center justify-center md:justify-start gap-2 text-[#7ef542] text-sm mb-2">
                 <TrendingUp className="w-4 h-4" />
                 Ticket médio do produto
               </label>
@@ -311,7 +313,7 @@ export default function Page() {
                   }}
                   onBlur={calcularCampoAutomatico}
                   placeholder="297,00"
-                  className="w-full bg-[#0a0f0d] border border-[#1a2520] rounded-lg px-4 pl-12 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#7ef542] transition-colors"
+                  className="w-full bg-[#0a0f0d] border border-[#1a2520] rounded-lg px-4 pl-12 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#7ef542] transition-colors text-center md:text-left"
                 />
               </div>
             </div>
@@ -319,7 +321,7 @@ export default function Page() {
             {modoDetalhado && (
               <>
                 <div>
-                  <label className="flex items-center gap-2 text-[#7ef542] text-sm mb-2">
+                  <label className="flex items-center justify-center md:justify-start gap-2 text-[#7ef542] text-sm mb-2">
                     <TrendingUp className="w-4 h-4" />
                     Número de vendas realizadas no mês
                   </label>
@@ -334,12 +336,12 @@ export default function Page() {
                     }}
                     onBlur={calcularCampoAutomatico}
                     placeholder="168"
-                    className="w-full bg-[#0a0f0d] border border-[#1a2520] rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#7ef542] transition-colors"
+                    className="w-full bg-[#0a0f0d] border border-[#1a2520] rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#7ef542] transition-colors text-center md:text-left"
                   />
                 </div>
 
                 <div>
-                  <label className="flex items-center gap-2 text-[#7ef542] text-sm mb-2">
+                  <label className="flex items-center justify-center md:justify-start gap-2 text-[#7ef542] text-sm mb-2">
                     <AlertTriangle className="w-4 h-4" />
                     Carrinhos/checkouts abandonados no mês
                   </label>
@@ -349,7 +351,7 @@ export default function Page() {
                     onChange={handleCarrinhosAbandonadosChange}
                     onKeyPress={handleKeyPress}
                     placeholder="504"
-                    className="w-full bg-[#0a0f0d] border border-[#1a2520] rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#7ef542] transition-colors"
+                    className="w-full bg-[#0a0f0d] border border-[#1a2520] rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#7ef542] transition-colors text-center md:text-left"
                   />
                 </div>
               </>
@@ -364,8 +366,9 @@ export default function Page() {
           </button>
 
           {!modoDetalhado && (
-            <div className="mt-6 bg-[#111816] rounded-2xl p-8 border border-yellow-600/30">
-              <div className="flex items-start gap-3 mb-4">
+            // Centralização do container de Aviso no Mobile
+            <div className="mt-6 bg-[#111816] rounded-2xl p-8 border border-yellow-600/30 text-center md:text-left">
+              <div className="flex flex-col md:flex-row items-center md:items-start gap-3 mb-4">
                 <AlertTriangle className="w-5 h-5 text-yellow-500 flex-shrink-0 mt-1" />
                 <h4 className="text-lg font-bold text-yellow-500">
                   Atenção: Cálculos Baseados em Benchmarks de Mercado
@@ -447,8 +450,9 @@ export default function Page() {
           )}
 
           {modoDetalhado && (
-            <div className="mt-6 bg-[#111816] rounded-2xl p-8 border border-yellow-600/30">
-              <div className="flex items-start gap-3 mb-4">
+            // Centralização do container de Aviso (Detalhado) no Mobile
+            <div className="mt-6 bg-[#111816] rounded-2xl p-8 border border-yellow-600/30 text-center md:text-left">
+              <div className="flex flex-col md:flex-row items-center md:items-start gap-3 mb-4">
                 <AlertTriangle className="w-5 h-5 text-yellow-500 flex-shrink-0 mt-1" />
                 <h4 className="text-lg font-bold text-yellow-500">
                   Atenção: Diagnóstico Baseado em Dados Reais da Operação
@@ -507,8 +511,9 @@ export default function Page() {
         {resultados && (
           <>
             <div ref={resultadosRef} className="bg-[#111816] rounded-2xl p-8 mb-8 border border-[#1a2520]">
-              <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6 mb-8">
-                <div className="flex items-start gap-3">
+              {/* Cabeçalho de Resultados Centralizado no Mobile */}
+              <div className="flex flex-col md:flex-row items-center md:items-start md:justify-between gap-6 mb-8 text-center md:text-left">
+                <div className="flex flex-col md:flex-row items-center md:items-start gap-3">
                   <AlertTriangle className="w-6 h-6 text-[#7ef542] flex-shrink-0" />
                   <div>
                     <h3 className="text-sm text-gray-400 uppercase tracking-wide">Oportunidade Perdida</h3>
