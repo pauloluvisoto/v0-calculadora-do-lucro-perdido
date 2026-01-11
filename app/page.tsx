@@ -442,8 +442,6 @@ export default function Page() {
                     para estancar esse vazamento e elevar sua performance aos patamares de excelência do mercado.
                   </p>
                 </div>
-
-                
               </div>
             </div>
           )}
@@ -500,8 +498,6 @@ export default function Page() {
                     receita imediata.
                   </p>
                 </div>
-
-                
               </div>
             </div>
           )}
@@ -534,7 +530,6 @@ export default function Page() {
               <div className="space-y-4 mb-6">
                 {/* Passo 1: Vendas */}
                 <div className="relative">
-                  
                   <div className="bg-[#0a0f0d] rounded-xl p-6 border border-[#1a2520] hover:border-[#7ef542]/30 transition-all">
                     <div className="flex items-center justify-between">
                       <div>
@@ -555,7 +550,6 @@ export default function Page() {
 
                 {/* Passo 2: Oportunidades */}
                 <div className="relative">
-                  
                   <div className="bg-[#0a0f0d] rounded-xl p-6 border border-[#1a2520] hover:border-[#7ef542]/30 transition-all">
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
@@ -583,7 +577,6 @@ export default function Page() {
 
                 {/* Passo 3: Valor Mensal */}
                 <div className="relative">
-                  
                   <div className="bg-[#0a0f0d] rounded-xl p-6 border border-[#1a2520] hover:border-[#7ef542]/30 transition-all">
                     <div className="flex items-center justify-between">
                       <div>
@@ -609,7 +602,6 @@ export default function Page() {
 
                 {/* Passo 4: Valor Anual */}
                 <div className="relative">
-                  
                   <div className="bg-[#0a0f0d] rounded-xl p-6 border border-[#1a2520] hover:border-[#7ef542]/30 transition-all">
                     <div className="flex items-center justify-between">
                       <div>
@@ -635,7 +627,6 @@ export default function Page() {
 
                 {/* Passo 5: Multiplicador */}
                 <div className="relative">
-                  
                   <div className="bg-gradient-to-br from-[#7ef542]/20 to-[#7ef542]/5 rounded-xl p-6 border-2 border-[#7ef542] hover:border-[#7ef542] transition-all">
                     <div className="flex items-center justify-between">
                       <div>
@@ -841,8 +832,7 @@ export default function Page() {
                       </div>
                       <h4 className="text-xl font-bold text-[#0a0f0d]">
                         O Lead mais Quente da Operação
-                        <br />
-                      é o Mais Negligenciado
+                        <br />é o Mais Negligenciado
                       </h4>
                     </div>
                     <p className="text-gray-700 text-sm leading-relaxed mb-3">
@@ -869,8 +859,7 @@ export default function Page() {
                       </div>
                       <h4 className="text-xl font-bold text-[#0a0f0d]">
                         O Lucro Invisível:
-                        <br />
-                        O Resultado está "Dentro de Casa"
+                        <br />O Resultado está "Dentro de Casa"
                       </h4>
                     </div>
                     <p className="text-gray-700 text-sm leading-relaxed mb-3">
@@ -899,10 +888,12 @@ export default function Page() {
                       </div>
                       <div className="flex flex-col">
                         {/* Nota: Se a logo "Wordmark Fundo Claro" for escura, considere usar a versão transparente ou branca aqui */}
-                        <img src="/logo-recupera-transparent.png" alt="Recupera.ia" className="h-8 w-auto mb-2 self-start" />
-                        <h4 className="font-bold text-white">
-                          A Tecnologia para Estancar o Vazamento
-                        </h4>
+                        <img
+                          src="/logo-recupera-transparent.png"
+                          alt="Recupera.ia"
+                          className="h-8 w-auto mb-2 self-start"
+                        />
+                        <h4 className="font-bold text-white">A Tecnologia para Estancar o Vazamento</h4>
                       </div>
                     </div>
                     <p className="text-gray-300 text-sm leading-relaxed mb-3">
@@ -923,13 +914,10 @@ export default function Page() {
                   {/* ========================================================================= */}
                 </div>
 
-                
-
                 <div className="text-center pt-6 border-t-2 border-gray-200">
                   <p className="text-xl font-bold text-[#0a0f0d] mb-4">
                     Você está pronto para parar de desperdiçar dinheiro e começar a recuperar o que já é seu?
                   </p>
-                  
                 </div>
               </div>
             </div>
@@ -1045,9 +1033,9 @@ export default function Page() {
             <div className="mt-12 bg-[#111816] rounded-2xl p-8 border border-[#1a2520]">
               <div className="text-center mb-8">
                 <h3 className="text-xl md:text-3xl font-bold leading-tight">
-  E se eu dissesse que você também pode ter esse resultado?
-  <br />E o melhor: <span className="text-[#7ef542]">de graça!</span>
-</h3>
+                  E se eu dissesse que você também pode ter esse resultado?
+                  <br />E o melhor: <span className="text-[#7ef542]">de graça!</span>
+                </h3>
               </div>
 
               <div className="mt-8">
