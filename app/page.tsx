@@ -1034,8 +1034,8 @@ export default function Page() {
             <div className="mt-12 bg-[#111816] rounded-2xl p-8 border border-[#1a2520]">
               <div className="text-center mb-8">
                 <h3 className="text-xl md:text-3xl font-bold leading-tight">
-                  {nomeLead}, e se eu dissesse que você também pode ter esse resultado?
-                  <br />E o melhor: <span className="text-[#7ef542]">de graça!</span>
+                  {nomeLead}, e quanto você acha que custa para ter esse resultado?
+                  <br />E o melhor: <span className="text-[#7ef542]">com risco zero!</span>
                 </h3>
               </div>
 
