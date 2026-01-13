@@ -16,7 +16,8 @@ import {
   Activity,  
   Target,
   Info,       
-  HelpCircle  
+  HelpCircle,
+  CheckCircle2
 } from "lucide-react"
 
 export default function Page() {
@@ -72,10 +73,10 @@ export default function Page() {
 
   const badWords = ['teste', 'test', 'admin', 'merda', 'bosta', 'caralho', 'puta', 'viado', 'cu', 'buceta', 'pinto', 'burro', 'idiota', 'desgraça', 'foda', 'corno', 'pau', 'chupa']
 
+  // CORREÇÃO: Validação exata da palavra para permitir nomes como "Paulo"
   const containsProfanity = (text: string) => {
     if (!text) return false
-    const lowerText = text.toLowerCase()
-    return badWords.some(word => lowerText.includes(word))
+    return badWords.some((word) => new RegExp(`\\b${word}\\b`, "i").test(text))
   }
 
   const formatText = (text: string) => {
@@ -157,7 +158,6 @@ export default function Page() {
 
   const calcularCampoAutomatico = () => {
     if (!modoDetalhado) return
-
     const fat = parseCurrency(faturamento)
     const ticket = parseCurrency(ticketMedio)
     const vendas = Number(vendasRealizadas) || 0
@@ -174,25 +174,25 @@ export default function Page() {
     }
 
     if (hasFaturamento && hasVendas && !hasTicket) {
-      const calculatedTicket = fat / vendas
-      const formatted = new Intl.NumberFormat("pt-BR", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      }).format(calculatedTicket)
-      setTicketMedio(formatted)
-      setCampoAutoCalculado("ticket")
-      return
+        const calculatedTicket = fat / vendas
+        const formatted = new Intl.NumberFormat("pt-BR", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        }).format(calculatedTicket)
+        setTicketMedio(formatted)
+        setCampoAutoCalculado("ticket")
+        return
     }
-
+    
     if (hasVendas && hasTicket && !hasFaturamento) {
-      const calculatedFat = vendas * ticket
-      const formatted = new Intl.NumberFormat("pt-BR", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      }).format(calculatedFat)
-      setFaturamento(formatted)
-      setCampoAutoCalculado("faturamento")
-      return
+        const calculatedFat = vendas * ticket
+        const formatted = new Intl.NumberFormat("pt-BR", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        }).format(calculatedFat)
+        setFaturamento(formatted)
+        setCampoAutoCalculado("faturamento")
+        return
     }
   }
 
@@ -200,13 +200,13 @@ export default function Page() {
     const formatted = formatCurrency(e.target.value)
     setFaturamento(formatted)
     if (modoDetalhado) {
-      const hasTicket = ticketMedio && ticketMedio !== ""
-      const hasVendas = vendasRealizadas && vendasRealizadas !== ""
-      if (hasTicket && hasVendas) {
-        setTicketMedio("")
-        setVendasRealizadas("")
-        setCampoAutoCalculado(null)
-      }
+        const hasTicket = ticketMedio && ticketMedio !== ""
+        const hasVendas = vendasRealizadas && vendasRealizadas !== ""
+        if (hasTicket && hasVendas) {
+            setTicketMedio("")
+            setVendasRealizadas("")
+            setCampoAutoCalculado(null)
+        }
     }
   }
 
@@ -214,13 +214,13 @@ export default function Page() {
     const formatted = formatCurrency(e.target.value)
     setTicketMedio(formatted)
     if (modoDetalhado) {
-      const hasFaturamento = faturamento && faturamento !== ""
-      const hasVendas = vendasRealizadas && vendasRealizadas !== ""
-      if (hasFaturamento && hasVendas) {
-        setFaturamento("")
-        setVendasRealizadas("")
-        setCampoAutoCalculado(null)
-      }
+        const hasFaturamento = faturamento && faturamento !== ""
+        const hasVendas = vendasRealizadas && vendasRealizadas !== ""
+        if (hasFaturamento && hasVendas) {
+            setFaturamento("")
+            setVendasRealizadas("")
+            setCampoAutoCalculado(null)
+        }
     }
   }
 
@@ -228,13 +228,13 @@ export default function Page() {
     const value = e.target.value.replace(/\D/g, "")
     setVendasRealizadas(value)
     if (modoDetalhado) {
-      const hasFaturamento = faturamento && faturamento !== ""
-      const hasTicket = ticketMedio && ticketMedio !== ""
-      if (hasFaturamento && hasTicket) {
-        setFaturamento("")
-        setTicketMedio("")
-        setCampoAutoCalculado(null)
-      }
+        const hasFaturamento = faturamento && faturamento !== ""
+        const hasTicket = ticketMedio && ticketMedio !== ""
+        if (hasFaturamento && hasTicket) {
+            setFaturamento("")
+            setTicketMedio("")
+            setCampoAutoCalculado(null)
+        }
     }
   }
 
@@ -268,7 +268,10 @@ export default function Page() {
     let carrinhosAband: number
     let taxaAtual = 0
     let investimentoAd = parseCurrency(investimentoTrafego) || 0
-    let freqLTV = Number(frequenciaCompra) || 1 
+    
+    let freqLTV = Number(frequenciaCompra)
+    if (freqLTV < 1) freqLTV = 1 
+
     let visitasEstimadas = 0
 
     if (modoDetalhado) {
@@ -276,11 +279,10 @@ export default function Page() {
       const taxaInput = parseFloat(taxaConversao.replace(',', '.'))
 
       if (vendasInput <= 0 || !taxaInput || taxaInput <= 0) {
-        alert("Preencha vendas e taxa de conversão.")
+        alert("Por favor, preencha o número de vendas e a taxa de conversão corretamente.")
         return
       }
 
-      // Engenharia Reversa (Benchmark 2025)
       const totalVisitasCheckout = vendasInput / (taxaInput / 100)
       const abandonosCalculados = totalVisitasCheckout - vendasInput
       
@@ -290,7 +292,7 @@ export default function Page() {
       taxaAtual = taxaInput
 
     } else {
-      // Modo Simplificado: Benchmark Conservador (3x)
+      // Modo Simplificado (3x)
       vendas = Math.round(fat / ticket)
       carrinhosAband = vendas * 3
       taxaAtual = 25 
@@ -299,7 +301,6 @@ export default function Page() {
 
     const oportunidadePerdida = carrinhosAband * ticket
     
-    // Cálculo de Desperdício de Tráfego
     let desperdicio = 0
     let ineficiencia = 0
     
@@ -335,7 +336,7 @@ export default function Page() {
       projecao: {
           mes3: oportunidadePerdida * 3,
           mes6: oportunidadePerdida * 6,
-          ano1: perdaRealLTV 
+          ano1: oportunidadePerdida * 12 * (freqLTV >= 1 ? freqLTV : 1) // Lógica LTV
       },
       recuperacao10: { mensal: recuperacao10, anual: recuperacao10 * 12 },
       recuperacao20: { mensal: recuperacao20, anual: recuperacao20 * 12 },
@@ -347,10 +348,18 @@ export default function Page() {
     }, 100)
   }
 
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      calcular()
-    }
+  // --- HELPERS DE EXIBIÇÃO ---
+
+  const getStatusColor = (status: string) => {
+      if (status === "Critico") return "text-red-500"
+      if (status === "Padrao") return "text-yellow-500"
+      return "text-[#7ef542]"
+  }
+
+  const getStatusBg = (status: string) => {
+      if (status === "Critico") return "bg-red-500"
+      if (status === "Padrao") return "bg-yellow-500"
+      return "bg-[#7ef542]"
   }
 
   const formatResultCurrency = (value: number) => {
@@ -366,18 +375,10 @@ export default function Page() {
     return new Intl.NumberFormat("pt-BR").format(value)
   }
 
-  // --- HELPERS DE EXIBIÇÃO ---
-
-  const getStatusColor = (status: string) => {
-      if (status === "Critico") return "text-red-500"
-      if (status === "Padrao") return "text-yellow-500"
-      return "text-[#7ef542]"
-  }
-
-  const getStatusBg = (status: string) => {
-      if (status === "Critico") return "bg-red-500"
-      if (status === "Padrao") return "bg-yellow-500"
-      return "bg-[#7ef542]"
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      calcular()
+    }
   }
 
   return (
@@ -395,260 +396,121 @@ export default function Page() {
           </p>
         </header>
 
-        {/* Seção de Entradas */}
+        {/* --- INPUTS --- */}
         <div className="bg-[#111816] rounded-2xl p-8 mb-8 border border-[#1a2520]">
           <div className="flex flex-col-reverse md:flex-row items-center md:items-start justify-between mb-6 gap-6 md:gap-0">
             <div className="text-center md:text-left">
-              <h2 className="text-xl font-semibold mb-2">Dados do seu negócio</h2>
+              <h2 className="text-xl font-semibold mb-2">Diagnóstico do Negócio</h2>
               <p className="text-gray-400 text-sm">Preencha as informações abaixo para calcular</p>
             </div>
 
             <div className="flex items-center gap-2 bg-[#0a0f0d] rounded-lg p-1 border border-[#1a2520]">
-              <button
-                onClick={() => setModoDetalhado(false)}
-                className={`px-4 py-2 rounded-md text-xs font-semibold transition-all ${
-                  !modoDetalhado ? "bg-[#7ef542] text-[#0a0f0d]" : "text-gray-400 hover:text-white"
-                }`}
-              >
-                Simplificado
-              </button>
-              <button
-                onClick={() => setModoDetalhado(true)}
-                className={`px-4 py-2 rounded-md text-xs font-semibold transition-all ${
-                  modoDetalhado ? "bg-[#7ef542] text-[#0a0f0d]" : "text-gray-400 hover:text-white"
-                }`}
-              >
-                Detalhado
-              </button>
+              <button onClick={() => setModoDetalhado(false)} className={`px-4 py-2 rounded-md text-xs font-semibold transition-all ${!modoDetalhado ? "bg-[#7ef542] text-[#0a0f0d]" : "text-gray-400 hover:text-white"}`}>Simplificado</button>
+              <button onClick={() => setModoDetalhado(true)} className={`px-4 py-2 rounded-md text-xs font-semibold transition-all ${modoDetalhado ? "bg-[#7ef542] text-[#0a0f0d]" : "text-gray-400 hover:text-white"}`}>Detalhado</button>
             </div>
           </div>
 
           <div className="grid md:grid-cols-2 gap-6 mb-6">
             {/* === CAMPOS DE IDENTIFICAÇÃO === */}
             <div>
-              <label className="flex items-center justify-center md:justify-start gap-2 text-[#7ef542] text-sm mb-2">
-                <User className="w-4 h-4" />
-                Nome <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                value={nomeLead}
-                onChange={(e) => setNomeLead(e.target.value)}
-                placeholder="Seu nome completo"
-                className="w-full bg-[#0a0f0d] border border-[#1a2520] rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#7ef542] transition-colors text-center md:text-left"
-              />
+              <label className="flex items-center justify-center md:justify-start gap-2 text-[#7ef542] text-sm mb-2"><User className="w-4 h-4" /> Nome <span className="text-red-500">*</span></label>
+              <input type="text" value={nomeLead} onChange={(e) => setNomeLead(e.target.value)} placeholder="Seu nome completo" className="w-full bg-[#0a0f0d] border border-[#1a2520] rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#7ef542] transition-colors text-center md:text-left" />
             </div>
 
             <div>
-              <label className="flex items-center justify-center md:justify-start gap-2 text-[#7ef542] text-sm mb-2">
-                <Smartphone className="w-4 h-4" />
-                Nº Whatsapp <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                value={whatsapp}
-                onChange={handleWhatsappChange}
-                onBlur={handleWhatsappBlur}
-                placeholder="(00) 00000-0000"
-                className="w-full bg-[#0a0f0d] border border-[#1a2520] rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#7ef542] transition-colors text-center md:text-left"
-              />
-              <p className="text-[10px] text-gray-500 mt-1 text-center md:text-left">
-                Se o número não for do Brasil (+55), insira o código do país.
-              </p>
+              <label className="flex items-center justify-center md:justify-start gap-2 text-[#7ef542] text-sm mb-2"><Smartphone className="w-4 h-4" /> Nº Whatsapp <span className="text-red-500">*</span></label>
+              <input type="text" value={whatsapp} onChange={handleWhatsappChange} onBlur={handleWhatsappBlur} placeholder="(00) 00000-0000" className="w-full bg-[#0a0f0d] border border-[#1a2520] rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#7ef542] transition-colors text-center md:text-left" />
+              <p className="text-[10px] text-gray-500 mt-1 text-center md:text-left">Se o número não for do Brasil (+55), insira o código do país.</p>
             </div>
 
             <div>
-              <label className="flex items-center justify-center md:justify-start gap-2 text-[#7ef542] text-sm mb-2">
-                <Package className="w-4 h-4" />
-                Nome do Produto
-              </label>
-              <input
-                type="text"
-                value={nomeProduto}
-                onChange={(e) => setNomeProduto(e.target.value)}
-                placeholder="Ex: Método X (Opcional)"
-                className="w-full bg-[#0a0f0d] border border-[#1a2520] rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#7ef542] transition-colors text-center md:text-left"
-              />
+              <label className="flex items-center justify-center md:justify-start gap-2 text-[#7ef542] text-sm mb-2"><Package className="w-4 h-4" /> Nome do Produto</label>
+              <input type="text" value={nomeProduto} onChange={(e) => setNomeProduto(e.target.value)} placeholder="Ex: Método X (Opcional)" className="w-full bg-[#0a0f0d] border border-[#1a2520] rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#7ef542] transition-colors text-center md:text-left" />
             </div>
 
             <div>
-              <label className="flex items-center justify-center md:justify-start gap-2 text-[#7ef542] text-sm mb-2">
-                <Tag className="w-4 h-4" />
-                Tipo de Produto
-              </label>
-              <input
-                type="text"
-                value={tipoProduto}
-                onChange={(e) => setTipoProduto(e.target.value)}
-                placeholder="Ex: Curso, Mentoria (Opcional)"
-                className="w-full bg-[#0a0f0d] border border-[#1a2520] rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#7ef542] transition-colors text-center md:text-left"
-              />
+              <label className="flex items-center justify-center md:justify-start gap-2 text-[#7ef542] text-sm mb-2"><Tag className="w-4 h-4" /> Tipo de Produto</label>
+              <input type="text" value={tipoProduto} onChange={(e) => setTipoProduto(e.target.value)} placeholder="Ex: Curso, Mentoria (Opcional)" className="w-full bg-[#0a0f0d] border border-[#1a2520] rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#7ef542] transition-colors text-center md:text-left" />
             </div>
 
             <div className="md:col-span-2">
-              <label className="flex items-center justify-center md:justify-start gap-2 text-[#7ef542] text-sm mb-2">
-                <Briefcase className="w-4 h-4" />
-                Nicho de Atuação
-              </label>
-              <input
-                type="text"
-                value={nicho}
-                onChange={(e) => setNicho(e.target.value)}
-                placeholder="Ex: Saúde, Finanças (Opcional)"
-                className="w-full bg-[#0a0f0d] border border-[#1a2520] rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#7ef542] transition-colors text-center md:text-left"
-              />
+              <label className="flex items-center justify-center md:justify-start gap-2 text-[#7ef542] text-sm mb-2"><Briefcase className="w-4 h-4" /> Nicho de Atuação</label>
+              <input type="text" value={nicho} onChange={(e) => setNicho(e.target.value)} placeholder="Ex: Saúde, Finanças (Opcional)" className="w-full bg-[#0a0f0d] border border-[#1a2520] rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#7ef542] transition-colors text-center md:text-left" />
             </div>
 
             {/* === CAMPOS DE CÁLCULO === */}
             <div>
-              <label className="flex items-center justify-center md:justify-start gap-2 text-[#7ef542] text-sm mb-2">
-                <DollarSign className="w-4 h-4" />
-                Faturamento mensal <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">R$</span>
-                <input
-                  type="text"
-                  value={faturamento}
-                  onChange={handleFaturamentoChange}
-                  onKeyPress={handleKeyPress}
-                  onBlur={calcularCampoAutomatico}
-                  placeholder="50.000,00"
-                  className="w-full bg-[#0a0f0d] border border-[#1a2520] rounded-lg px-4 pl-12 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#7ef542] transition-colors text-center md:text-left"
-                />
-              </div>
+              <label className="flex items-center justify-center md:justify-start gap-2 text-[#7ef542] text-sm mb-2"><DollarSign className="w-4 h-4" /> Faturamento mensal <span className="text-red-500">*</span></label>
+              <input type="text" value={faturamento} onChange={handleMonetaryChange(setFaturamento)} onKeyPress={handleKeyPress} onBlur={calcularCampoAutomatico} placeholder="50.000,00" className="w-full bg-[#0a0f0d] border border-[#1a2520] rounded-lg px-4 pl-12 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#7ef542] transition-colors text-center md:text-left" />
             </div>
 
             <div>
-              <label className="flex items-center justify-center md:justify-start gap-2 text-[#7ef542] text-sm mb-2">
-                <TrendingUp className="w-4 h-4" />
-                Ticket médio do produto <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">R$</span>
-                <input
-                  type="text"
-                  value={ticketMedio}
-                  onChange={handleTicketMedioChange}
-                  onKeyPress={handleKeyPress}
-                  onBlur={calcularCampoAutomatico}
-                  placeholder="297,00"
-                  className="w-full bg-[#0a0f0d] border border-[#1a2520] rounded-lg px-4 pl-12 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#7ef542] transition-colors text-center md:text-left"
-                />
-              </div>
+              <label className="flex items-center justify-center md:justify-start gap-2 text-[#7ef542] text-sm mb-2"><TrendingUp className="w-4 h-4" /> Ticket médio do produto <span className="text-red-500">*</span></label>
+              <input type="text" value={ticketMedio} onChange={handleMonetaryChange(setTicketMedio)} onKeyPress={handleKeyPress} onBlur={calcularCampoAutomatico} placeholder="297,00" className="w-full bg-[#0a0f0d] border border-[#1a2520] rounded-lg px-4 pl-12 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#7ef542] transition-colors text-center md:text-left" />
             </div>
 
             {modoDetalhado && (
               <>
                 <div>
-                  <label className="flex items-center justify-center md:justify-start gap-2 text-[#7ef542] text-sm mb-2">
-                    <TrendingUp className="w-4 h-4" />
-                    Número de vendas realizadas no mês <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={vendasRealizadas}
-                    onChange={handleVendasRealizadasChange}
-                    onKeyPress={handleKeyPress}
-                    onBlur={calcularCampoAutomatico}
-                    placeholder="168"
-                    className="w-full bg-[#0a0f0d] border border-[#1a2520] rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#7ef542] transition-colors text-center md:text-left"
-                  />
+                  <label className="flex items-center justify-center md:justify-start gap-2 text-[#7ef542] text-sm mb-2"><TrendingUp className="w-4 h-4" /> Número de vendas realizadas no mês <span className="text-red-500">*</span></label>
+                  <input type="text" value={vendasRealizadas} onChange={handleNumericChange(setVendasRealizadas)} onKeyPress={handleKeyPress} onBlur={calcularCampoAutomatico} placeholder="168" className="w-full bg-[#0a0f0d] border border-[#1a2520] rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#7ef542] transition-colors text-center md:text-left" />
                 </div>
 
                 <div>
-                  <label className="flex items-center justify-center md:justify-start gap-2 text-[#7ef542] text-sm mb-2">
-                    <Percent className="w-4 h-4" />
-                    Taxa de Conversão Checkout (%)
-                  </label>
-                  <input
-                    type="text"
-                    value={taxaConversao}
-                    onChange={handleTaxaConversaoChange}
-                    onKeyPress={handleKeyPress}
-                    placeholder="Ex: 15,00"
-                    className="w-full bg-[#0a0f0d] border border-[#1a2520] rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#7ef542] transition-colors text-center md:text-left"
-                  />
-                  <p className="text-[10px] text-gray-500 mt-1 text-center md:text-left">
-                    Consulte o dashboard da sua plataforma (Hotmart/Kiwify).
-                  </p>
+                  <label className="flex items-center justify-center md:justify-start gap-2 text-[#7ef542] text-sm mb-2"><Percent className="w-4 h-4" /> Taxa de Conversão Checkout (%)</label>
+                  <input type="text" value={taxaConversao} onChange={handleTaxaConversaoChange} onKeyPress={handleKeyPress} placeholder="Ex: 15,00" className="w-full bg-[#0a0f0d] border border-[#1a2520] rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#7ef542] transition-colors text-center md:text-left" />
+                  <p className="text-[10px] text-gray-500 mt-1 text-center md:text-left">Consulte o dashboard da sua plataforma (Hotmart/Kiwify).</p>
                 </div>
                 
-                {/* Novos Campos Estratégicos: ROAS e LTV */}
+                {/* Novos Campos Estratégicos */}
                 <div>
-                    <label className="flex items-center justify-center md:justify-start gap-2 text-[#7ef542] text-sm mb-2">
-                      <Target className="w-4 h-4" /> Investimento em Tráfego (Mensal)
-                    </label>
+                    <label className="flex items-center justify-center md:justify-start gap-2 text-[#7ef542] text-sm mb-2"><Target className="w-4 h-4" /> Investimento em Tráfego (Mensal)</label>
                     <div className="relative">
                         <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">R$</span>
-                        <input 
-                          type="text" 
-                          value={investimentoTrafego} 
-                          onChange={handleMonetaryChange(setInvestimentoTrafego)} 
-                          placeholder="10.000,00 (Opcional)" 
-                          className="w-full bg-[#0a0f0d] border border-[#1a2520] rounded-lg px-4 pl-12 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#7ef542] transition-colors text-center md:text-left" 
-                        />
+                        <input type="text" value={investimentoTrafego} onChange={handleMonetaryChange(setInvestimentoTrafego)} placeholder="10.000,00 (Opcional)" className="w-full bg-[#0a0f0d] border border-[#1a2520] rounded-lg px-4 pl-12 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#7ef542] transition-colors text-center md:text-left" />
                     </div>
                 </div>
                 <div>
-                    <label className="flex items-center justify-center md:justify-start gap-2 text-[#7ef542] text-sm mb-2">
-                      <Briefcase className="w-4 h-4" /> Compras por cliente/ano (LTV)
-                    </label>
-                    <input 
-                      type="text" 
-                      value={frequenciaCompra} 
-                      onChange={handleNumericChange(setFrequenciaCompra)} 
-                      placeholder="Ex: 2 (Se vender mais de 1x)" 
-                      className="w-full bg-[#0a0f0d] border border-[#1a2520] rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#7ef542] transition-colors text-center md:text-left" 
-                    />
+                    <label className="flex items-center justify-center md:justify-start gap-2 text-[#7ef542] text-sm mb-2"><Briefcase className="w-4 h-4" /> Compras por cliente/ano (LTV)</label>
+                    <input type="text" value={frequenciaCompra} onChange={handleNumericChange(setFrequenciaCompra)} placeholder="Ex: 2 (Se vender mais de 1x)" className="w-full bg-[#0a0f0d] border border-[#1a2520] rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#7ef542] transition-colors text-center md:text-left" />
                 </div>
               </>
             )}
           </div>
 
-          <button
-            onClick={calcular}
-            className="w-full bg-[#7ef542] hover:bg-[#6ee032] text-[#0a0f0d] font-bold py-4 rounded-lg transition-colors uppercase"
-          >
-            Calcular meu lucro perdido
+          <button onClick={calcular} className="w-full bg-[#7ef542] hover:bg-[#6ee032] text-[#0a0f0d] font-bold py-4 rounded-lg transition-colors uppercase">
+            Gerar Diagnóstico Financeiro
           </button>
 
           {!modoDetalhado && (
             <div className="mt-6 bg-[#111816] rounded-2xl p-8 border border-yellow-600/30 text-center md:text-left">
               <div className="flex flex-col md:flex-row items-center md:items-start gap-3 mb-4">
                 <AlertTriangle className="w-5 h-5 text-yellow-500 flex-shrink-0 mt-1" />
-                <h4 className="text-lg font-bold text-yellow-500">
-                  Atenção: Cálculos Baseados em Benchmarks de Mercado
-                </h4>
+                <h4 className="text-lg font-bold text-yellow-500">Atenção: Cálculos Baseados em Benchmarks de Mercado</h4>
               </div>
-
               <div className="space-y-6 text-sm text-gray-300">
-                <p className="text-gray-400 text-xs">
-                  Os cálculos no modo simplificado utilizam benchmarks técnicos do mercado brasileiro de infoprodutos
-                  (Ano base 2024/2025) para tickets de até R$ 1.000,00.
-                </p>
+                <p className="text-gray-400 text-xs">Os cálculos no modo simplificado utilizam benchmarks técnicos do mercado brasileiro de infoprodutos (Ano base 2024/2025) para tickets de até R$ 1.000,00.</p>
                 <div>
                   <h5 className="text-white font-semibold mb-2">1. Contexto de Performance e Eficiência</h5>
                   <ul className="space-y-2 list-disc list-inside text-gray-400 text-xs">
                     <li>Em operações de boa performance, a média estatística registrada é de <span className="text-white font-semibold">6 abandonos de checkout</span> para cada 1 venda concluída.</li>
-                    <li>Em operações consideradas eficientes, o sistema processa entre <span className="text-white font-semibold">5 a 7 tentativas falhas</span> (somando abandonos, boletos e recusas) para cada transação aprovada.</li>
+                    <li>Em operações consideradas eficientes, o sistema processa entre <span className="text-white font-semibold">5 a 7 tentativas falhas</span> para cada transação aprovada.</li>
                     <li>Para esta calculadora, adotamos um critério conservador de apenas <span className="text-[#7ef542] font-semibold">3 abandonos para cada 1 venda</span>, garantindo uma projeção de segurança e credibilidade para o seu negócio.</li>
                   </ul>
                 </div>
-                <div>
-                  <h5 className="text-white font-semibold mb-2">2. Detalhamento dos Gargalos Técnicos</h5>
-                  <p className="text-gray-400 text-xs mb-2">Mesmo em um cenário conservador, o faturamento é drenado por quatro fatores principais:</p>
-                  <ul className="space-y-2 list-none text-gray-400 text-xs">
-                    <li><span className="text-white font-semibold">A. Recusa de Cartão de Crédito:</span> Cerca de 15% das vendas com intenção clara de compra são perdidas por falhas de infraestrutura financeira ou bloqueios de antifraude.</li>
-                    <li><span className="text-white font-semibold">B. Abandono de Checkout:</span> A taxa de abandono de carrinhos no Brasil chega a 82%, o que significa que a grande maioria dos interessados não conclui a jornada de compra.</li>
-                    <li><span className="text-white font-semibold">C. PIX não Convertido:</span> A taxa de abandono pós-geração do código PIX pode atingir 50% em campanhas de tráfego frio.</li>
-                    <li><span className="text-white font-semibold">D. Inércia do Boleto:</span> O índice de desistência após a emissão de boletos varia entre 55% e 70%, com uma taxa de conversão real de apenas 30% a 45%.</li>
-                  </ul>
+                
+                <div className="bg-black/30 p-4 rounded-lg border border-yellow-500/20 mt-2">
+                    <p className="text-xs font-bold text-white mb-2">Parâmetros de Saúde do Checkout (Benchmark 2025):</p>
+                    <ul className="space-y-1 text-[11px] text-gray-400 list-none">
+                        <li className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-red-500"></span> <span className="text-red-400 font-bold">Crítico (&lt; 30%):</span> Vazamento grave. Seu tráfego está sendo incinerado na etapa final.</li>
+                        <li className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-yellow-500"></span> <span className="text-yellow-400 font-bold">Padrão (30% - 60%):</span> Zona de estagnação. Você paga pelo lead, mas deixa metade do faturamento para trás.</li>
+                        <li className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-[#7ef542]"></span> <span className="text-[#7ef542] font-bold">Eficiente (&gt; 60%):</span> Alta performance, mas atenção: na escala, os 40% que não compram representam sua maior fatia de lucro líquido perdido.</li>
+                    </ul>
                 </div>
+
                 <div>
                   <h5 className="text-white font-semibold mb-2">3. Observação Estratégica</h5>
-                  <p className="text-gray-400 text-xs">Caso os números de oportunidade apresentados neste modo simplificado sejam superiores aos da sua operação atual, isso é um <span className="text-yellow-500 font-semibold">indicativo de que seu funil possui gargalos críticos de conversão</span>.</p>
-                  <p className="text-[#7ef542] text-xs mt-2">A Recupera.ia possui o ecossistema tecnológico e as ferramentas de intervenção ativa necessárias para estancar esse vazamento e elevar sua performance aos patamares de excelência do mercado.</p>
+                  <p className="text-gray-400 text-xs">Caso os números apresentados sejam superiores aos da sua operação atual, isso é um <span className="text-yellow-500 font-semibold">indicativo de gargalos críticos</span>.</p>
                 </div>
               </div>
             </div>
@@ -658,258 +520,176 @@ export default function Page() {
             <div className="mt-6 bg-[#111816] rounded-2xl p-8 border border-yellow-600/30 text-center md:text-left">
               <div className="flex flex-col md:flex-row items-center md:items-start gap-3 mb-4">
                 <AlertTriangle className="w-5 h-5 text-yellow-500 flex-shrink-0 mt-1" />
-                <h4 className="text-lg font-bold text-yellow-500">
-                  Atenção: Diagnóstico Baseado em Dados Reais da Operação
-                </h4>
+                <h4 className="text-lg font-bold text-yellow-500">Atenção: Diagnóstico Baseado em Dados Reais da Operação</h4>
               </div>
-
               <div className="space-y-6 text-sm text-gray-300">
-                <p className="text-gray-400 text-xs">
-                  Ao informar sua <strong>taxa de conversão real</strong>, nossa calculadora realiza uma engenharia reversa do tráfego no seu checkout para determinar exatamente quantas pessoas iniciaram a compra e desistiram.
-                </p>
-                <div>
-                  <h5 className="text-white font-semibold mb-2">1. Dados de Mercado 2025</h5>
-                  <p className="text-gray-400 text-xs">Segundo benchmarks atualizados, a média de conversão no checkout gira em torno de <strong>45,7%</strong>. Taxas abaixo de 30% são consideradas críticas.</p>
+                <p className="text-gray-400 text-xs">Ao informar sua <strong>taxa de conversão real</strong>, realizamos uma engenharia reversa do tráfego no seu checkout para determinar exatamente quantas pessoas iniciaram a compra e desistiram.</p>
+                
+                <div className="bg-black/30 p-4 rounded-lg border border-yellow-500/20 mt-2">
+                    <p className="text-xs font-bold text-white mb-2">Parâmetros de Saúde do Checkout (Benchmark 2025):</p>
+                    <ul className="space-y-1 text-[11px] text-gray-400 list-none">
+                        <li className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-red-500"></span> <span className="text-red-400 font-bold">Crítico (&lt; 30%):</span> Vazamento grave. Seu tráfego está sendo incinerado na etapa final.</li>
+                        <li className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-yellow-500"></span> <span className="text-yellow-400 font-bold">Padrão (30% - 60%):</span> Zona de estagnação. Você paga pelo lead, mas deixa metade do faturamento para trás.</li>
+                        <li className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-[#7ef542]"></span> <span className="text-[#7ef542] font-bold">Eficiente (&gt; 60%):</span> Alta performance, mas atenção: na escala, os 40% que não compram representam sua maior fatia de lucro líquido perdido.</li>
+                    </ul>
                 </div>
+
                 <div>
                   <h5 className="text-white font-semibold mb-2">2. Identificação de Gargalos</h5>
-                  <p className="text-gray-400 text-xs">Se sua taxa está baixa, você está pagando caro para levar o lead até a "porta da loja" apenas para vê-lo sair sem comprar por fricção, falta de opções de pagamento ou falhas técnicas.</p>
-                </div>
-                <div>
-                  <h5 className="text-white font-semibold mb-2">3. Observação Estratégica</h5>
-                  <p className="text-gray-400 text-xs">A diferença entre o tráfego estimado no checkout e suas vendas realizadas é o seu <span className="text-[#7ef542] font-semibold">"lucro invisível"</span>. A Recupera.ia atua exatamente nessa lacuna.</p>
+                  <p className="text-gray-400 text-xs">Se sua taxa está baixa, você está pagando caro para levar o lead até o checkout apenas para vê-lo sair sem comprar.</p>
                 </div>
               </div>
             </div>
           )}
         </div>
 
-        {/* Seção de Resultados */}
+        {/* --- RESULTADOS --- */}
         {resultados && (
-          <>
-            <div ref={resultadosRef} className="bg-[#111816] rounded-2xl p-8 mb-8 border border-[#1a2520]">
-              
-              {/* === FEATURE 1: SAÚDE DO CHECKOUT === */}
-              <div className="mb-10 p-6 bg-[#0a0f0d] rounded-xl border border-[#1a2520]">
-                <div className="flex items-center gap-3 mb-4">
-                   <Activity className={`w-6 h-6 ${getStatusColor(resultados.statusSaude)}`} />
-                   <h3 className="text-lg font-bold">Diagnóstico de Saúde do Checkout</h3>
+          <div ref={resultadosRef} className="space-y-8">
+            
+            {/* 1. Diagnóstico de Saúde */}
+            <div className="bg-[#111816] rounded-2xl p-8 border border-[#1a2520]">
+                <div className="flex items-center gap-3 mb-6 justify-center md:justify-start">
+                    <Activity className={`w-6 h-6 ${getStatusColor(resultados.statusSaude)}`} />
+                    <h3 className="text-xl font-bold">Saúde do Checkout</h3>
                 </div>
-                
-                {/* Barra de Progresso */}
                 <div className="relative pt-1">
-                  <div className="flex mb-2 items-center justify-between">
-                    <div>
-                      <span className={`text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full ${getStatusBg(resultados.statusSaude)} text-[#0a0f0d]`}>
-                        {resultados.statusSaude === "Critico" ? "Crítico" : resultados.statusSaude === "Padrao" ? "Na Média" : "Excelência"}
-                      </span>
+                    <div className="flex mb-2 items-center justify-between">
+                        <div>
+                            <span className={`text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full ${getStatusBg(resultados.statusSaude)} text-[#0a0f0d]`}>
+                                {resultados.statusSaude === "Critico" ? "Crítico" : resultados.statusSaude === "Padrao" ? "Padrão" : "Eficiente"}
+                            </span>
+                        </div>
+                        <div className="text-right">
+                            <span className={`text-5xl font-bold block ${getStatusColor(resultados.statusSaude)}`}>
+                                {resultados.taxaConversaoAtual.toFixed(2).replace('.', ',')}%
+                            </span>
+                            <span className="text-xs text-gray-400">Conversão</span>
+                        </div>
                     </div>
-                    <div className="text-right">
-                      <span className="text-xs font-semibold inline-block text-white">
-                        {resultados.taxaConversaoAtual.toFixed(2)}% Conversão
-                      </span>
+                    <div className="overflow-hidden h-2 mb-4 text-xs flex rounded bg-gray-700">
+                        <div style={{ width: `${Math.min(resultados.taxaConversaoAtual, 100)}%` }} className={`shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center ${getStatusBg(resultados.statusSaude)}`}></div>
                     </div>
-                  </div>
-                  <div className="overflow-hidden h-2 mb-4 text-xs flex rounded bg-gray-700">
-                    <div style={{ width: `${Math.min(resultados.taxaConversaoAtual, 100)}%` }} className={`shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center ${getStatusBg(resultados.statusSaude)}`}></div>
-                  </div>
-                  <p className="text-xs text-gray-400">
-                    {resultados.statusSaude === "Critico" 
-                      ? "Sua taxa de conversão está abaixo de 30%. Há um vazamento grave de receita ocorrendo agora." 
-                      : resultados.statusSaude === "Padrao" 
-                      ? "Você está na média do mercado (30-60%), mas operações de alta performance buscam acima de 62%."
-                      : "Sua conversão é excelente, acima de 60%. O foco agora é escala e LTV."}
-                  </p>
+                    <p className="text-xs text-gray-400 text-center md:text-left mb-4">
+                        {resultados.statusSaude === "Critico" 
+                            ? "ATENÇÃO: Vazamento grave identificado. Seu tráfego está sendo incinerado na etapa final (<30%). A prioridade máxima é estancar essa perda técnica." 
+                            : resultados.statusSaude === "Padrao" 
+                            ? "CUIDADO: Zona de estagnação (30-60%). Você paga caro pelo lead, mas deixa metade do faturamento para trás. É funcional, mas financeiramente ineficiente."
+                            : "Sua conversão é eficiente (>60%), mas cuidado: na escala, os clientes que não compram (40%) representam a maior fatia de lucro líquido desperdiçado."}
+                    </p>
                 </div>
-              </div>
+            </div>
 
-              {/* Cabeçalho Resultados */}
-              <div className="flex flex-col md:flex-row items-center md:items-start md:justify-between gap-6 mb-8 text-center md:text-left">
-                <div className="flex flex-col md:flex-row items-center md:items-start gap-3">
-                  <AlertTriangle className="w-6 h-6 text-[#7ef542] flex-shrink-0" />
-                  <div>
-                    <h3 className="text-sm text-gray-400 uppercase tracking-wide">Oportunidade Perdida</h3>
-                    <p className="text-xs text-gray-500 mt-1">Dinheiro que você está deixando em cima da mesa</p>
-                  </div>
-                </div>
-
-                <div className="md:text-right md:max-w-md">
-                  <p className="text-base text-white leading-relaxed">
-                    Com{" "}
-                    <span className="font-semibold text-[#7ef542]">{formatResultCurrency(resultados.faturamento)}</span>{" "}
-                    de faturamento mensal e Ticket Médio do produto em{" "}
-                    <span className="font-semibold text-[#7ef542]">{formatResultCurrency(resultados.ticketMedio)}</span>{" "}
-                    temos o seguinte cenário:
-                  </p>
-                </div>
-              </div>
-
-              <div className="space-y-4 mb-6">
-                {/* Passo 1: Vendas */}
-                <div className="relative">
-                  <div className="bg-[#0a0f0d] rounded-xl p-6 border border-[#1a2520] hover:border-[#7ef542]/30 transition-all">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Vendas Realizadas no Mês</p>
-                        <p className="text-3xl font-bold text-[#7ef542]">{formatNumber(resultados.vendas)}</p>
-                      </div>
-                      <div className="text-4xl">💰</div>
-                    </div>
-                  </div>
-                  <div className="flex justify-center my-3">
-                    <div className="flex flex-col items-center">
-                      <div className="w-0.5 h-8 bg-gradient-to-b from-[#7ef542] to-[#7ef542]/50"></div>
-                      <div className="text-[#7ef542] text-2xl">↓</div>
-                      <p className="text-xs text-gray-400 mt-1">
-                        {modoDetalhado ? "Cálculo baseado na eficiência do checkout" : "× 3 oportunidades por venda"}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Passo 2: Oportunidades */}
-                <div className="relative">
-                  <div className="bg-[#0a0f0d] rounded-xl p-6 border border-[#1a2520] hover:border-[#7ef542]/30 transition-all">
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Oportunidades Perdidas</p>
-                        <p className="text-3xl font-bold text-[#7ef542] mb-3">
-                           {formatNumber(Math.round(resultados.oportunidadePerdida / resultados.ticketMedio))}
+            {/* 2. Oportunidade Perdida (CORRIGIDO: Título e Leads em Verde) */}
+            <div className="bg-[#111816] rounded-2xl p-8 border border-[#1a2520]">
+                <div className="flex flex-col-reverse md:flex-row items-center justify-between gap-6">
+                    <div className="text-center md:text-left">
+                        <p className="text-sm text-gray-400 uppercase tracking-wide mb-1">Possibilidade de Faturamento Perdida Mensalmente</p>
+                        <h2 className="text-4xl md:text-5xl font-bold text-[#7ef542] mb-2">{formatResultCurrency(resultados.oportunidadePerdida)}</h2>
+                        <p className="text-sm text-white max-w-lg mb-4">
+                           Considerando sua taxa atual, estimamos que <span className="font-bold text-[#7ef542]">{formatNumber(Math.round(resultados.oportunidadePerdida / resultados.ticketMedio))} leads</span> chegaram ao pagamento e não concluíram.
                         </p>
-                        <p className="text-xs text-gray-400">
-                          {modoDetalhado 
-                            ? "Leads qualificados que iniciaram o checkout mas não concluíram a compra (Lucro Invisível)."
-                            : "Operações eficientes registram entre 5 a 7 tentativas falhas para cada transação aprovada."}
-                        </p>
-                      </div>
-                      <div className="text-4xl ml-4">⚠️</div>
-                    </div>
-                  </div>
-                  <div className="flex justify-center my-3">
-                    <div className="flex flex-col items-center">
-                      <div className="w-0.5 h-8 bg-gradient-to-b from-[#7ef542] to-[#7ef542]/50"></div>
-                      <div className="text-[#7ef542] text-2xl">↓</div>
-                      <p className="text-xs text-gray-400 mt-1">
-                        × Ticket Médio de {formatResultCurrency(resultados.ticketMedio)}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Passo 3: Valor Mensal */}
-                <div className="relative">
-                  <div className="bg-[#0a0f0d] rounded-xl p-6 border border-[#1a2520] hover:border-[#7ef542]/30 transition-all">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">
-                          Oportunidade Perdida Mensal
-                        </p>
-                        <h2 className="text-3xl font-bold text-[#7ef542] mb-2">
-                          {formatResultCurrency(resultados.oportunidadePerdida)}
-                        </h2>
-                        <p className="text-xs text-gray-400">Valor em vendas não aproveitadas todos os meses</p>
                         
-                        {/* FEATURE 2: DESPERDÍCIO DE TRÁFEGO */}
+                        <div className="bg-[#0a0f0d] p-4 rounded-lg border border-gray-800 text-xs text-gray-400 mt-4 mb-4">
+                            <div className="flex items-center gap-2 mb-2 text-white font-semibold">
+                                <HelpCircle className="w-4 h-4 text-[#7ef542]" />
+                                De onde veio esse número?
+                            </div>
+                            {modoDetalhado ? (
+                                <p>
+                                    Com {resultados.taxaConversaoAtual}% de conversão, você precisou de aprox. {formatNumber(resultados.totalVisitasEstimadas)} visitas para gerar {resultados.vendas} vendas. 
+                                    A diferença ({formatNumber(resultados.totalVisitasEstimadas - resultados.vendas)}) são as pessoas que desistiram.
+                                </p>
+                            ) : (
+                                <p>
+                                    Atenção: Embora operações eficientes registrem entre 5 a 7 tentativas falhas, nós utilizamos um cálculo propositalmente conservador de apenas<br /> <span className="font-bold text-[#7ef542]">3 tentativas de compra sem finalização para cada 1 venda</span>. Isso significa que este número é o cenário "menos pior".
+                                </p>
+                            )}
+                        </div>
+                        
                         {resultados.desperdicioTrafego > 0 && (
-                            <div className="mt-3 pt-3 border-t border-[#1a2520]">
+                            <div className="mt-4 bg-red-900/20 border border-red-500/30 p-3 rounded-lg inline-block text-left">
                                 <div className="flex items-center gap-2 text-red-400 mb-1 font-bold text-xs">
-                                     <Target className="w-3 h-3"/> Desperdício de Anúncios
+                                     <Target className="w-3 h-3"/> Desperdício de Investimento em Anúncios
                                 </div>
                                 <p className="text-xs text-gray-300">
-                                    A meta de eficiência é 50%. Como sua taxa é {resultados.taxaConversaoAtual.toFixed(1)}%, sua ineficiência é de <strong>{resultados.ineficienciaTrafego.toFixed(1)}%</strong>. 
-                                    Isso significa que <strong>{formatResultCurrency(resultados.desperdicioTrafego)}</strong> do seu budget mensal foi literalmente jogado fora.
+                                    Se sua conversão fosse a ideal (50%), você precisaria de METADE do tráfego para fazer as mesmas vendas. 
+                                    Como é {resultados.taxaConversaoAtual.toFixed(1)}%, metade do seu dinheiro está sendo gasto para atrair pessoas que o checkout não converte.
+                                    <br/>
+                                    <strong>Valor estimado jogado fora: {formatResultCurrency(resultados.desperdicioTrafego)}.</strong>
                                 </p>
                             </div>
                         )}
-
-                        {/* FEATURE: EXPLICAÇÃO DA CONTA (SIMPLIFICADO E DETALHADO) */}
-                        <div className="mt-3 pt-3 border-t border-[#1a2520] text-xs text-gray-500">
-                             <div className="flex items-center gap-1 mb-1 text-gray-400 font-semibold">
-                                <Info className="w-3 h-3"/> De onde veio esse valor?
-                             </div>
-                             {modoDetalhado ? (
-                                <p>
-                                    Com {resultados.taxaConversaoAtual}% de conversão, você precisou de aprox. {formatNumber(resultados.totalVisitasEstimadas)} visitas para gerar {resultados.vendas} vendas. 
-                                    A diferença ({formatNumber(resultados.totalVisitasEstimadas - resultados.vendas)}) são as pessoas que você perdeu.
-                                </p>
-                             ) : (
-                                <p>
-                                    Cálculo conservador de mercado: Para cada 1 venda realizada, estima-se uma perda mínima de 3 clientes no processo de checkout.
-                                </p>
-                             )}
-                        </div>
-
-                      </div>
-                      <div className="text-4xl">📊</div>
                     </div>
-                  </div>
-                  <div className="flex justify-center my-3">
-                    <div className="flex flex-col items-center">
-                      <div className="w-0.5 h-8 bg-gradient-to-b from-[#7ef542] to-[#7ef542]/50"></div>
-                      <div className="text-[#7ef542] text-2xl">↓</div>
-                      <p className="text-xs text-gray-400 mt-1">Projeção Temporal</p>
-                    </div>
-                  </div>
+                    <div className="text-6xl">💸</div>
                 </div>
+            </div>
 
-                {/* FEATURE 3: CUSTO DA INAÇÃO (TIMELINE) */}
-                <div className="grid md:grid-cols-3 gap-4 mb-8">
+            {/* Passo 5: Diagnóstico Final (CORRIGIDO: Texto exato com quebra de linha) */}
+            <div className="relative mt-12 mb-12">
+              <div className="bg-gradient-to-br from-[#7ef542]/20 to-[#7ef542]/5 rounded-xl p-8 border-2 border-[#7ef542] hover:border-[#7ef542] transition-all">
+                <div className="flex flex-col-reverse md:flex-row items-center justify-between gap-6">
+                  <div>
+                    <p className="text-xs text-[#7ef542] uppercase tracking-wide mb-1 font-semibold text-center md:text-left">
+                      O Diagnóstico Final
+                    </p>
+                    <p className="text-5xl font-bold text-[#7ef542] mb-2 text-center md:text-left">
+                      {resultados.faturamento > 0
+                        ? ((resultados.oportunidadePerdida / resultados.faturamento) * 100).toFixed(1).replace('.', ',')
+                        : "0,00"}%
+                    </p>
+                    <p className="text-sm text-white text-center md:text-left">
+                      Na prática você está deixando na mesa uma possibilidade de aumento de{" "}
+                      <span className="font-semibold text-[#7ef542]">
+                        {resultados.faturamento > 0
+                          ? ((resultados.oportunidadePerdida / resultados.faturamento) * 100)
+                              .toFixed(1)
+                              .replace(".", ",")
+                          : "0,0"}%
+                      </span>{" "}
+                      em relação ao seu faturamento atual de{" "}
+                      <span className="font-semibold text-[#7ef542]">
+                        {formatResultCurrency(resultados.faturamento)}
+                      </span>.
+                      <br />
+                      <br />
+                      <span className="text-lg font-bold">É muito dinheiro!!!</span>
+                      <br />
+                      Olha só os números aqui embaixo.
+                    </p>
+                  </div>
+                  <div className="text-5xl">🚨</div>
+                </div>
+              </div>
+            </div>
+
+            {/* TIMELINE (CUSTO DA INAÇÃO) - CORRIGIDO: Fonte maior e posição abaixo */}
+            <div className="mb-12">
+                <div className="flex items-center gap-2 mb-4 justify-center md:justify-start">
+                     <span className="text-2xl">⏳</span>
+                     <h3 className="text-xl font-semibold">O Custo da Inação</h3>
+                </div>
+                <div className="grid md:grid-cols-3 gap-4">
                     <div className="bg-[#0a0f0d] p-4 rounded-xl border border-[#1a2520] text-center">
                         <div className="flex justify-center items-center gap-1 mb-2 text-gray-400 text-xs">
                             <Clock className="w-3 h-3" /> Em 3 Meses
                         </div>
-                        <p className="text-xl font-bold text-white">{formatResultCurrency(resultados.projecao.mes3)}</p>
+                        <p className="text-3xl font-bold text-white">{formatResultCurrency(resultados.projecao.mes3)}</p>
                     </div>
                     <div className="bg-[#0a0f0d] p-4 rounded-xl border border-[#1a2520] text-center">
                         <div className="flex justify-center items-center gap-1 mb-2 text-gray-400 text-xs">
                             <Clock className="w-3 h-3" /> Em 6 Meses
                         </div>
-                        <p className="text-xl font-bold text-white">{formatResultCurrency(resultados.projecao.mes6)}</p>
+                        <p className="text-3xl font-bold text-white">{formatResultCurrency(resultados.projecao.mes6)}</p>
                     </div>
                     <div className="bg-[#0a0f0d] p-4 rounded-xl border border-[#7ef542]/50 text-center relative overflow-hidden">
                          <div className="absolute top-0 right-0 bg-[#7ef542] w-8 h-8 blur-xl opacity-20"></div>
                         <div className="flex justify-center items-center gap-1 mb-2 text-[#7ef542] text-xs font-bold">
                             <Clock className="w-3 h-3" /> Em 1 Ano (LTV)
                         </div>
-                        <p className="text-xl font-bold text-[#7ef542]">{formatResultCurrency(resultados.projecao.ano1)}</p>
+                        <p className="text-3xl font-bold text-[#7ef542]">{formatResultCurrency(resultados.projecao.ano1)}</p>
                     </div>
                 </div>
-
-                {/* Passo 5: Multiplicador */}
-                <div className="relative">
-                  <div className="bg-gradient-to-br from-[#7ef542]/20 to-[#7ef542]/5 rounded-xl p-6 border-2 border-[#7ef542] hover:border-[#7ef542] transition-all">
-                    <div className="flex flex-col-reverse md:flex-row items-center justify-between gap-4 md:gap-0">
-                      <div>
-                        <p className="text-xs text-[#7ef542] uppercase tracking-wide mb-1 font-semibold text-center md:text-left">
-                          O Diagnóstico Final
-                        </p>
-                        <p className="text-5xl font-bold text-[#7ef542] mb-2 text-center md:text-left">
-                          {resultados.faturamento > 0
-                            ? ((resultados.oportunidadePerdida / resultados.faturamento) * 100).toFixed(1).replace('.', ',')
-                            : "0,00"}%
-                        </p>
-                        <p className="text-sm text-white text-center md:text-left">
-                          Na prática você está deixando na mesa uma possibilidade de aumento de{" "}
-                          <span className="font-semibold text-[#7ef542]">
-                            {resultados.faturamento > 0
-                              ? ((resultados.oportunidadePerdida / resultados.faturamento) * 100).toFixed(1).replace('.', ',')
-                              : "0,00"}%
-                          </span>{" "}
-                          em relação ao seu faturamento atual de {formatResultCurrency(resultados.faturamento)}
-                        </p>
-                      </div>
-                      <div className="text-5xl">🚨</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="text-center pt-4">
-                <p className="text-lg text-[#7ef542] leading-relaxed">
-                  Até quando você vai pagar caro na captação de leads apenas para vê-los gerando lucro no bolso dos seus
-                  concorrentes?
-                </p>
-              </div>
             </div>
 
             {/* Cards de Cenários */}
@@ -924,21 +704,19 @@ export default function Page() {
               {/* Card 10% */}
               <div className="bg-[#111816] rounded-2xl p-6 border border-[#1a2520] hover:border-[#2a3530] transition-colors">
                 <div className="mb-4">
-                  <p className="text-xs text-[rgb(255,255,255)] uppercase tracking-wide mb-1 text-[20px] font-bold">
-                    COM 10% DE CONVERSÃO
+                  <p className="text-xs text-white uppercase tracking-wide mb-1 text-[20px] font-bold">
+                    COM 10%* DE CONVERSÃO
                   </p>
                 </div>
-
                 <div className="space-y-4">
                   <div>
-                    <p className="text-xs text-gray-500 mb-1">Possibilidade de Ganho Mensal</p>
+                    <p className="text-xs text-gray-500 mb-1">Ganho Mensal</p>
                     <p className="text-2xl font-bold text-white">
                       +{formatResultCurrency(resultados.recuperacao10.mensal)}
                     </p>
                   </div>
-
                   <div className="pt-4 border-t border-[#1a2520]">
-                    <p className="text-xs text-gray-500 mb-1">Possibilidade de Ganho Anual</p>
+                    <p className="text-xs text-gray-500 mb-1">Ganho Anual</p>
                     <p className="text-xl font-semibold text-white">
                       +{formatResultCurrency(resultados.recuperacao10.anual)}
                     </p>
@@ -949,21 +727,19 @@ export default function Page() {
               {/* Card 20% */}
               <div className="bg-[#111816] rounded-2xl p-6 border-2 border-[#7ef542]/30 hover:border-[#7ef542]/50 transition-colors relative">
                 <div className="mb-4">
-                  <p className="text-xs text-[rgb(255,255,255)] uppercase tracking-wide mb-1 text-[20px] font-bold">
-                    COM 20% DE CONVERSÃO
+                  <p className="text-xs text-white uppercase tracking-wide mb-1 text-[20px] font-bold">
+                    COM 20%* DE CONVERSÃO
                   </p>
                 </div>
-
                 <div className="space-y-4">
                   <div>
-                    <p className="text-xs text-gray-500 mb-1">Possibilidade de Ganho Mensal</p>
+                    <p className="text-xs text-gray-500 mb-1">Ganho Mensal</p>
                     <p className="text-2xl font-bold text-white">
                       +{formatResultCurrency(resultados.recuperacao20.mensal)}
                     </p>
                   </div>
-
                   <div className="pt-4 border-t border-[#1a2520]">
-                    <p className="text-xs text-gray-500 mb-1">Possibilidade de Ganho Anual</p>
+                    <p className="text-xs text-gray-500 mb-1">Ganho Anual</p>
                     <p className="text-xl font-semibold text-white">
                       +{formatResultCurrency(resultados.recuperacao20.anual)}
                     </p>
@@ -975,20 +751,18 @@ export default function Page() {
               <div className="bg-gradient-to-br from-[#111816] to-[#0f1814] rounded-2xl p-6 border-2 border-[#7ef542] hover:border-[#7ef542] transition-colors">
                 <div className="mb-4">
                   <p className="text-xs text-[#7ef542] uppercase tracking-wide mb-1 text-[20px] font-bold">
-                    COM 34% DE CONVERSÃO
+                    COM 34%* DE CONVERSÃO
                   </p>
                 </div>
-
                 <div className="space-y-4">
                   <div>
-                    <p className="text-xs text-gray-500 mb-1">Possibilidade de Ganho Mensal</p>
+                    <p className="text-xs text-gray-500 mb-1">Ganho Mensal</p>
                     <p className="text-2xl font-bold text-[#7ef542]">
                       +{formatResultCurrency(resultados.recuperacao34.mensal)}
                     </p>
                   </div>
-
                   <div className="pt-4 border-t border-[#2a3530]">
-                    <p className="text-xs text-gray-500 mb-1">Possibilidade de Ganho Anual</p>
+                    <p className="text-xs text-gray-500 mb-1">Ganho Anual</p>
                     <p className="text-xl font-semibold text-[#7ef542]">
                       +{formatResultCurrency(resultados.recuperacao34.anual)}
                     </p>
@@ -998,25 +772,21 @@ export default function Page() {
             </div>
 
             <p className="text-xs text-gray-500 text-center mt-8">
-              No exemplo acima temos as Taxas de Conversão que atingimos no decorrer dos testes de validação da
-              Recupera.ia
+              * Taxas de Conversão Atingidas no decorrer dos Testes de Validação da Recupera.ia
             </p>
 
-            {/* Seção Unificada: Frases de Impacto (Mensal e Anual) */}
+            {/* Seção Unificada: Frases de Impacto */}
             <div className="mt-16 bg-[#111816] rounded-2xl p-8 md:p-10 border border-[#1a2520]">
-              <div className="grid md:grid-cols-2 gap-10 items-center">
-                {/* Frase 1: Mensal */}
+              <div className="grid md:grid-cols-2 gap-10 items-center text-center">
                 <div>
-                  <h3 className="text-3xl md:text-4xl font-bold leading-tight text-center">
+                  <h3 className="text-3xl md:text-4xl font-bold leading-tight text-center md:text-center">
                     {renderDynamicHeadline(nomeLead, "faria diferença pra você hoje ter mais ")}
                     <span className="text-[#7ef542]">{formatResultCurrency(resultados.recuperacao10.mensal)}</span> no
                     seu bolso todo mês?
                   </h3>
                 </div>
-
-                {/* Frase 2: Anual */}
                 <div className="md:border-l md:border-[#1a2520] md:pl-10">
-                  <h3 className="text-3xl md:text-4xl font-bold leading-tight text-center">
+                  <h3 className="text-3xl md:text-4xl font-bold leading-tight text-center md:text-center">
                     E acumular{" "}
                     <span className="text-[#7ef542]">{formatResultCurrency(resultados.recuperacao10.anual)}</span> para
                     a realização daquele sonho adiado tantas vezes seria espetacular, não seria?
@@ -1025,6 +795,7 @@ export default function Page() {
               </div>
             </div>
 
+            {/* SEÇÃO EDUCATIVA */}
             <div className="mt-12">
               <div className="bg-white rounded-2xl p-8 md:p-10 mb-12 shadow-2xl border-4 border-[#7ef542]">
                 <div className="text-center mb-8">
@@ -1045,9 +816,10 @@ export default function Page() {
                 </div>
 
                 <div className="grid md:grid-cols-2 gap-6 mb-8">
+                  {/* Card 1 */}
                   <div className="bg-gradient-to-br from-gray-50 to-white rounded-xl p-6 border-2 border-gray-200 hover:border-[#7ef542] transition-all hover:shadow-lg">
                     <div className="flex items-start gap-3 mb-3">
-                      <div className="w-10 h-10 bg-[#7ef542] rounded-full flex items-center justify-center flex-shrink-0 text-xl font-bold">
+                      <div className="w-10 h-10 bg-[#7ef542] rounded-full flex items-center justify-center flex-shrink-0 text-xl font-bold text-[#0a0f0d]">
                         1
                       </div>
                       <h4 className="text-xl font-bold text-[#0a0f0d]">A Dura Realidade dos Números de Conversão</h4>
@@ -1069,19 +841,13 @@ export default function Page() {
                           desconhecido é imenso e o desperdício de leads qualificados é a regra, não a exceção.
                         </p>
                       </div>
-                      <div>
-                        <p className="text-sm font-semibold text-[#0a0f0d] mb-1">C. O Custo do Desconhecido:</p>
-                        <p className="text-gray-700 text-sm leading-relaxed">
-                          Batalhar por quem não te conhece exige um convencimento muito maior do que recuperar alguém
-                          que já percorreu 90% do seu funil e parou no checkout.
-                        </p>
-                      </div>
                     </div>
                   </div>
 
+                  {/* Card 2 */}
                   <div className="bg-gradient-to-br from-gray-50 to-white rounded-xl p-6 border-2 border-gray-200 hover:border-[#7ef542] transition-all hover:shadow-lg">
                     <div className="flex items-start gap-3 mb-3">
-                      <div className="w-10 h-10 bg-[#7ef542] rounded-full flex items-center justify-center flex-shrink-0 text-xl font-bold">
+                      <div className="w-10 h-10 bg-[#7ef542] rounded-full flex items-center justify-center flex-shrink-0 text-xl font-bold text-[#0a0f0d]">
                         2
                       </div>
                       <h4 className="text-xl font-bold text-[#0a0f0d]">
@@ -1106,9 +872,10 @@ export default function Page() {
                     </div>
                   </div>
 
+                  {/* Card 3 */}
                   <div className="bg-gradient-to-br from-gray-50 to-white rounded-xl p-6 border-2 border-gray-200 hover:border-[#7ef542] transition-all hover:shadow-lg">
                     <div className="flex items-start gap-3 mb-3">
-                      <div className="w-10 h-10 bg-[#7ef542] rounded-full flex items-center justify-center flex-shrink-0 text-xl font-bold">
+                      <div className="w-10 h-10 bg-[#7ef542] rounded-full flex items-center justify-center flex-shrink-0 text-xl font-bold text-[#0a0f0d]">
                         3
                       </div>
                       <h4 className="text-xl font-bold text-[#0a0f0d]">
@@ -1134,14 +901,13 @@ export default function Page() {
                     </div>
                   </div>
 
-                  {/* Card 4 Alterado: Fundo Escuro e Texto Branco */}
+                  {/* Card 4 - A Solução */}
                   <div className="bg-[#111816] rounded-xl p-6 border-2 border-[#7ef542] hover:border-[#6ee032] transition-all hover:shadow-[0_0_20px_rgba(126,245,66,0.2)]">
                     <div className="flex items-start gap-3 mb-3">
                       <div className="w-10 h-10 bg-[#7ef542] rounded-full flex items-center justify-center flex-shrink-0 text-xl font-bold text-[#0a0f0d]">
                         4
                       </div>
                       <div className="flex flex-col">
-                        {/* Nota: Se a logo "Wordmark Fundo Claro" for escura, considere usar a versão transparente ou branca aqui */}
                         <img
                           src="/logo-recupera-transparent.png"
                           alt="Recupera.ia"
@@ -1165,7 +931,6 @@ export default function Page() {
                       </p>
                     </div>
                   </div>
-                  {/* ========================================================================= */}
                 </div>
 
                 <div className="text-center pt-6 border-t-2 border-gray-200">
@@ -1176,141 +941,126 @@ export default function Page() {
               </div>
             </div>
 
-            {/* Seção de Números/Casos de Sucesso */}
+            {/* SEÇÃO DE PROVA SOCIAL (DEPOIMENTOS) - RESTAURADA EXATAMENTE CONFORME A IMAGEM */}
             <div className="mt-12">
               <div className="text-center mb-8">
-                <h3 className="text-2xl font-bold mb-2">Veja alguns números</h3>
+                <h3 className="text-2xl font-bold mb-2 text-white">Veja alguns números</h3>
                 <p className="text-gray-400">Resultados reais de quem ja confia na Recupera.ia</p>
               </div>
 
               <div className="grid md:grid-cols-3 gap-6">
                 {/* Card 1 - Comunidade Online */}
-                <div className="bg-[#111816] rounded-2xl p-6 border border-[#1a2520] hover:border-[#7ef542]/30 transition-all">
+                <div className="bg-[#111816] rounded-2xl p-6 border border-[#1a2520] hover:border-[#7ef542]/30 transition-all flex flex-col h-full">
                   <div className="mb-6">
                     <h4 className="text-lg font-bold text-white mb-1">Comunidade Online</h4>
                     <p className="text-sm text-gray-400">(Área de Membros)</p>
                   </div>
 
                   <div className="mb-4">
-                    <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide mb-2">O Cenário:</p>
+                    <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide mb-2">O CENÁRIO:</p>
                     <p className="text-sm text-gray-300 text-[13px]">
                       R$ 116.955,00 em assinaturas não concluídas. Todos os meses.
                     </p>
                   </div>
 
-                  <div className="mb-4">
-                    <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide mb-2">O Resultado:</p>
-                    <p className="text-sm text-gray-300 mb-3">
-                      Em apenas um mês, a Recupera.ia colocou{" "}
-                      <span className="text-[#7ef542] font-semibold">R$ 35.866,20</span> de volta no caixa do cliente,
-                      recuperando <span className="text-white font-semibold">138 leads</span> que já eram considerados
-                      perdidos.
+                  <div className="mb-4 flex-grow">
+                    <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide mb-2">O RESULTADO:</p>
+                    <p className="text-sm text-gray-300 mb-4">
+                      Em apenas um mês, a Recupera.ia colocou <span className="text-[#7ef542] font-bold">R$ 35.866,20</span> de volta no caixa do cliente, recuperando <span className="text-white font-bold">138 leads</span> que já eram considerados perdidos.
                     </p>
-                    <div className="bg-[#7ef542]/10 border border-[#7ef542]/30 rounded-lg p-3">
-                      <p className="text-[#7ef542] font-bold text-center">Taxa de Conversão de 30,66%</p>
+                    <div className="border border-[#7ef542]/50 bg-[#7ef542]/5 rounded-lg p-3 mb-4">
+                      <p className="text-[#7ef542] font-bold text-center text-sm">Taxa de Conversão de 30,66%</p>
                     </div>
                   </div>
 
-                  <blockquote className="text-xs text-gray-400 italic border-l-2 border-[#7ef542]/30 pl-3 mt-4">
-                    "É um dinheiro que simplesmente não existia para nós. A Recupera.ia não só pagou o investimento no
-                    primeiro dia, como criou uma nova fonte de receita que não nos custa nenhum esforço para gerir."
+                  <blockquote className="text-xs text-gray-500 italic mt-auto">
+                    "É um dinheiro que simplesmente não existia para nós. A Recupera.ia não só pagou o investimento no primeiro dia, como criou uma nova fonte de receita que não nos custa nenhum esforço para gerir."
                   </blockquote>
                 </div>
 
                 {/* Card 2 - E-commerce */}
-                <div className="bg-[#111816] rounded-2xl p-6 border border-[#1a2520] hover:border-[#7ef542]/30 transition-all">
+                <div className="bg-[#111816] rounded-2xl p-6 border border-[#1a2520] hover:border-[#7ef542]/30 transition-all flex flex-col h-full">
                   <div className="mb-6">
                     <h4 className="text-lg font-bold text-white mb-1">E-commerce</h4>
                     <p className="text-sm text-gray-400">Livros Físicos</p>
                   </div>
 
                   <div className="mb-4">
-                    <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide mb-2">O Cenário:</p>
+                    <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide mb-2">O CENÁRIO:</p>
                     <p className="text-sm text-gray-300 text-[13px]">
                       R$ 32.040,00 em potencial de vendas evaporando a cada 30 dias.
                     </p>
                   </div>
 
-                  <div className="mb-4">
-                    <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide mb-2">O Resultado:</p>
-                    <p className="text-sm text-gray-300 mb-3">
-                      Nossa IA Conversacional recuperou <span className="text-white font-semibold">107 clientes</span>,
-                      gerando <span className="text-[#7ef542] font-semibold">R$ 19.260,00</span> em faturamento extra e
-                      atingindo uma taxa de conversão que nenhuma outra ferramenta chegou perto.
+                  <div className="mb-4 flex-grow">
+                    <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide mb-2">O RESULTADO:</p>
+                    <p className="text-sm text-gray-300 mb-4">
+                      Nossa IA Conversacional recuperou <span className="text-white font-bold">107 clientes</span>, gerando <span className="text-[#7ef542] font-bold">R$ 19.260,00</span> em faturamento extra e atingindo uma taxa de conversão que nenhuma outra ferramenta chegou perto.
                     </p>
-                    <div className="bg-[#7ef542]/10 border border-[#7ef542]/30 rounded-lg p-3">
-                      <p className="text-[#7ef542] font-bold text-center">Taxa de Conversão de 60,11%</p>
+                    <div className="border border-[#7ef542]/50 bg-[#7ef542]/5 rounded-lg p-3 mb-4">
+                      <p className="text-[#7ef542] font-bold text-center text-sm">Taxa de Conversão de 60,11%</p>
                     </div>
                   </div>
 
-                  <blockquote className="text-xs text-gray-400 italic border-l-2 border-[#7ef542]/30 pl-3 mt-4">
-                    "Ver 6 em cada 10 pessoas que abandonaram o carrinho voltando para comprar foi inacreditável. A
-                    Recupera.ia não é uma ferramenta de recuperação, é uma máquina de conversão."
+                  <blockquote className="text-xs text-gray-500 italic mt-auto">
+                    "Ver 6 em cada 10 pessoas que abandonaram o carrinho voltando para comprar foi inacreditável. A Recupera.ia não é uma ferramenta de recuperação, é uma máquina de conversão."
                   </blockquote>
                 </div>
 
-                {/* Card 3 - Plataforma de Apostas */}
-                <div className="bg-[#111816] rounded-2xl p-6 border border-[#1a2520] hover:border-[#7ef542]/30 transition-all">
+                {/* Card 3 - Plataforma de Alto Volume */}
+                <div className="bg-[#111816] rounded-2xl p-6 border border-[#1a2520] hover:border-[#7ef542]/30 transition-all flex flex-col h-full">
                   <div className="mb-6">
                     <h4 className="text-lg font-bold text-white mb-1">Plataforma de Alto</h4>
                     <p className="text-sm text-gray-400">Volume (Apostas)</p>
                   </div>
 
                   <div className="mb-4">
-                    <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide mb-2">O Cenário:</p>
+                    <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide mb-2">O CENÁRIO:</p>
                     <p className="text-sm text-gray-300 text-[13px]">
                       Um vazamento massivo de mais de R$ 715.000,00 por mês em depósitos não realizados.
                     </p>
                   </div>
 
-                  <div className="mb-4">
-                    <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide mb-2">O Resultado:</p>
-                    <p className="text-sm text-gray-300 mb-3">
-                      Mesmo com um ticket baixo, nosso fluxo recuperou{" "}
-                      <span className="text-white font-semibold">13.745 usuários</span>, injetando{" "}
-                      <span className="text-[#7ef542] font-semibold">R$ 68.725,00</span> de receita adicional que antes
-                      era completamente perdida.
+                  <div className="mb-4 flex-grow">
+                    <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide mb-2">O RESULTADO:</p>
+                    <p className="text-sm text-gray-300 mb-4">
+                      Mesmo com um ticket baixo, nosso fluxo recuperou <span className="text-white font-bold">13.745 usuários</span>, injetando <span className="text-[#7ef542] font-bold">R$ 68.725,00</span> de receita adicional que antes era completamente perdida.
                     </p>
-                    <div className="bg-[#7ef542]/10 border border-[#7ef542]/30 rounded-lg p-3">
-                      <p className="text-[#7ef542] font-bold text-center">+13 mil recuperados em 30 dias</p>
+                    <div className="border border-[#7ef542]/50 bg-[#7ef542]/5 rounded-lg p-3 mb-4">
+                      <p className="text-[#7ef542] font-bold text-center text-sm">+13 mil recuperados em 30 dias</p>
                     </div>
                   </div>
 
-                  <blockquote className="text-xs text-gray-400 italic border-l-2 border-[#7ef542]/30 pl-3 mt-4">
-                    "No nosso volume, cada ponto percentual importa. A Recupera.ia nos entregou quase 10% de conversão
-                    sobre um público que já tínhamos desistido. É lucro puro, na escala que precisamos."
+                  <blockquote className="text-xs text-gray-500 italic mt-auto">
+                    "No nosso volume, cada ponto percentual importa. A Recupera.ia nos entregou quase 10% de conversão sobre um público que já tínhamos desistido. É lucro puro, na escala que precisamos."
                   </blockquote>
                 </div>
               </div>
             </div>
 
+            {/* CTA Final */}
             <div className="mt-12 bg-[#111816] rounded-2xl p-8 border border-[#1a2520]">
               <div className="text-center mb-8">
                 <h3 className="text-xl md:text-3xl font-bold leading-tight">
                   {renderDynamicHeadline(nomeLead, "e se eu dissesse que você também pode ter esse resultado?")}
-                  <br />E o melhor: com <span className="text-[#7ef542]">RISCO ZERO</span> de investir e não ter retorno{" "}
-                  <span className="text-[#7ef542]">
-                    <br />
-                    ASSINADO EM CONTRATO!
-                  </span>
+                  <br />E o melhor: com <span className="text-[#7ef542]">RISCO ZERO</span>{" "} de investir e não ter retorno <span className="text-[#7ef542]"><br />ASSINADO EM CONTRATO!</span>
                 </h3>
               </div>
 
               <div className="mt-8">
                 <a
-                  href="https://wa.me/5519936196347?text=Quero%20recuperar%20meu%20lucro%20perdido"
+                  href="https://cal.com/recupera.ia/30min"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-full bg-[#7ef542] hover:bg-[#6ee032] text-[#0a0f0d] font-bold py-6 px-8 rounded-lg transition-colors text-center block no-underline"
                 >
                   <span className="uppercase md:text-base leading-tight block text-[24px]">
-                    QUERO {formatResultCurrency(resultados.recuperacao10.mensal)} A MAIS NO MEU BOLSO TODOS OS MESES COM
-                    RISCO ZERO
+                    QUERO {formatResultCurrency(resultados.recuperacao10.mensal)} A MAIS NO MEU BOLSO TODOS OS MESES COM RISCO ZERO
                   </span>
                 </a>
               </div>
             </div>
-          </>
+          </div> // CORREÇÃO FINAL: Tag de fechamento correta
         )}
       </div>
     </div>
