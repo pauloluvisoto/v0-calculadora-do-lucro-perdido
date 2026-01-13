@@ -44,6 +44,74 @@ export default function Page() {
     setResultados(null)
   }, [modoDetalhado])
 
+  // --- FUNÇÕES DE VALIDAÇÃO E FORMATAÇÃO ---
+
+  // Lista de termos impróprios (pode ser expandida conforme necessidade)
+  const badWords = ['teste', 'test', 'admin', 'merda', 'bosta', 'caralho', 'puta', 'viado', 'cu', 'buceta', 'pinto', 'burro', 'idiota', 'desgraça', 'foda', 'corno', 'pau', 'chupa']
+
+  // Verifica se um texto contém termos impróprios
+  const containsProfanity = (text: string) => {
+    if (!text) return false
+    const lowerText = text.toLowerCase()
+    return badWords.some(word => lowerText.includes(word))
+  }
+
+  // Formata texto para Title Case (Primeira Letra Maiúscula de cada palavra)
+  const formatText = (text: string) => {
+    if (!text) return ""
+    return text
+      .toLowerCase()
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ')
+  }
+
+  // Função INTELIGENTE para gerar frases (Resolve o problema da Maiúscula e Profanidade)
+  const renderDynamicHeadline = (name: string, sentence: string) => {
+    // Se não tem nome OU o nome é impróprio
+    if (!name || !name.trim() || containsProfanity(name)) {
+      // Retorna a frase com a primeira letra forçada em MAIÚSCULA (Gramática correta)
+      return sentence.charAt(0).toUpperCase() + sentence.slice(1)
+    }
+    
+    // Se tem nome válido, retorna "Nome, frase" (frase mantida em minúscula conforme recebida)
+    return `${formatText(name)}, ${sentence}`
+  }
+
+  // Formatação automática do WhatsApp ao sair do campo (Blur)
+  const handleWhatsappBlur = () => {
+    let numbers = whatsapp.replace(/\D/g, "") // Garante que só tem números
+
+    // Se tiver 10 ou 11 dígitos, assume que é BR sem DDI e adiciona 55
+    if (numbers.length === 10 || numbers.length === 11) {
+      numbers = "55" + numbers
+    }
+
+    // Formatação visual para o usuário
+    if (numbers.length >= 12) {
+        if (numbers.startsWith("55") && numbers.length === 13) {
+            // Formato BR: +55 19 99999-9999
+            const ddi = numbers.substring(0, 2)
+            const ddd = numbers.substring(2, 4)
+            const part1 = numbers.substring(4, 9)
+            const part2 = numbers.substring(9, 13)
+            setWhatsapp(`+${ddi} ${ddd} ${part1}-${part2}`)
+        } else {
+            // Formato Genérico Internacional
+            setWhatsapp(`+${numbers}`)
+        }
+    } else if (numbers.length > 0) {
+        setWhatsapp(`+${numbers}`)
+    }
+  }
+
+  // Handler para WhatsApp - Aceita APENAS números enquanto digita
+  const handleWhatsappChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/\D/g, "") // Remove tudo que não for dígito imediatamente
+    setWhatsapp(value)
+  }
+
+  // Cálculos Automáticos dos campos de entrada
   const calcularCampoAutomatico = () => {
     if (!modoDetalhado) return
 
@@ -55,7 +123,6 @@ export default function Page() {
     const hasTicket = ticketMedio && ticketMedio !== "" && ticket > 0
     const hasVendas = vendasRealizadas && vendasRealizadas !== "" && vendas > 0
 
-    // Caso 1: Tem Faturamento e Ticket, calcula Vendas
     if (hasFaturamento && hasTicket && !hasVendas) {
       const calculatedVendas = Math.round(fat / ticket)
       setVendasRealizadas(String(calculatedVendas))
@@ -63,7 +130,6 @@ export default function Page() {
       return
     }
 
-    // Caso 2: Tem Faturamento e Vendas, calcula Ticket
     if (hasFaturamento && hasVendas && !hasTicket) {
       const calculatedTicket = fat / vendas
       const formatted = new Intl.NumberFormat("pt-BR", {
@@ -75,7 +141,6 @@ export default function Page() {
       return
     }
 
-    // Caso 3: Tem Vendas e Ticket, calcula Faturamento
     if (hasVendas && hasTicket && !hasFaturamento) {
       const calculatedFat = vendas * ticket
       const formatted = new Intl.NumberFormat("pt-BR", {
@@ -107,64 +172,45 @@ export default function Page() {
   const handleFaturamentoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const formatted = formatCurrency(e.target.value)
     setFaturamento(formatted)
-
-    if (modoDetalhado) {
-      const hasTicket = ticketMedio && ticketMedio !== ""
-      const hasVendas = vendasRealizadas && vendasRealizadas !== ""
-
-      if (hasTicket && hasVendas) {
-        setTicketMedio("")
-        setVendasRealizadas("")
-        setCampoAutoCalculado(null)
-      }
-    }
+    if (modoDetalhado) checkDetailedLogic()
   }
 
   const handleTicketMedioChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const formatted = formatCurrency(e.target.value)
     setTicketMedio(formatted)
-
-    if (modoDetalhado) {
-      const hasFaturamento = faturamento && faturamento !== ""
-      const hasVendas = vendasRealizadas && vendasRealizadas !== ""
-
-      if (hasFaturamento && hasVendas) {
-        setFaturamento("")
-        setVendasRealizadas("")
-        setCampoAutoCalculado(null)
-      }
-    }
+    if (modoDetalhado) checkDetailedLogic()
   }
 
   const handleVendasRealizadasChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/\D/g, "")
+    const value = e.target.value.replace(/\D/g, "") // Apenas números
     setVendasRealizadas(value)
-
-    if (modoDetalhado) {
-      const hasFaturamento = faturamento && faturamento !== ""
-      const hasTicket = ticketMedio && ticketMedio !== ""
-
-      if (hasFaturamento && hasTicket) {
-        setFaturamento("")
-        setTicketMedio("")
-        setCampoAutoCalculado(null)
-      }
-    }
+    if (modoDetalhado) checkDetailedLogic()
   }
 
   const handleCarrinhosAbandonadosChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/\D/g, "")
+    const value = e.target.value.replace(/\D/g, "") // Apenas números
     setCarrinhosAbandonados(value)
   }
 
-  const handleWhatsappChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setWhatsapp(e.target.value)
+  const checkDetailedLogic = () => {
+      // Lógica placeholder para consistência futura
   }
 
   const calcular = () => {
-    // --- NOVA VALIDAÇÃO: CAMPOS OBRIGATÓRIOS (Nome e WhatsApp) ---
+    // 1. Validação de Campos Obrigatórios
     if (!nomeLead.trim() || !whatsapp.trim()) {
-      alert("Por favor, preencha seu Nome e Número de WhatsApp para realizar o cálculo.")
+      alert("Por favor, preencha os campos obrigatórios: Nome e WhatsApp.")
+      return
+    }
+
+    // 2. Validação de Profanidade (Apenas para campos secundários)
+    // Nota: O nomeLead não é bloqueado aqui para permitir que a função renderDynamicHeadline faça a sanitização visual.
+    if (
+      containsProfanity(nomeProduto) || 
+      containsProfanity(tipoProduto) || 
+      containsProfanity(nicho)
+    ) {
+      alert("Por favor, utilize termos adequados nos campos de texto para prosseguir.")
       return
     }
 
@@ -187,7 +233,6 @@ export default function Page() {
         alert("Por favor, preencha todos os campos detalhados corretamente.")
         return
       }
-
       vendas = vendasInput
       carrinhosAband = carrinhosInput
     } else {
@@ -262,7 +307,6 @@ export default function Page() {
 
         {/* Seção de Entradas */}
         <div className="bg-[#111816] rounded-2xl p-8 mb-8 border border-[#1a2520]">
-          {/* Cabeçalho das Entradas */}
           <div className="flex flex-col-reverse md:flex-row items-center md:items-start justify-between mb-6 gap-6 md:gap-0">
             <div className="text-center md:text-left">
               <h2 className="text-xl font-semibold mb-2">Dados do seu negócio</h2>
@@ -308,7 +352,7 @@ export default function Page() {
               />
             </div>
 
-            {/* WhatsApp (Obrigatório) */}
+            {/* WhatsApp (Obrigatório - Apenas Números) */}
             <div>
               <label className="flex items-center justify-center md:justify-start gap-2 text-[#7ef542] text-sm mb-2">
                 <Smartphone className="w-4 h-4" />
@@ -317,10 +361,14 @@ export default function Page() {
               <input
                 type="text"
                 value={whatsapp}
-                onChange={handleWhatsappChange}
+                onChange={handleWhatsappChange} // Aceita apenas números digitados
+                onBlur={handleWhatsappBlur}     // Formata ao sair +55
                 placeholder="(00) 00000-0000"
                 className="w-full bg-[#0a0f0d] border border-[#1a2520] rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#7ef542] transition-colors text-center md:text-left"
               />
+              <p className="text-[10px] text-gray-500 mt-1 text-center md:text-left">
+                Se o número não for do Brasil (+55), insira o código do país.
+              </p>
             </div>
 
             {/* Nome do Produto (Opcional) */}
@@ -381,15 +429,7 @@ export default function Page() {
                   type="text"
                   value={faturamento}
                   onChange={handleFaturamentoChange}
-                  onKeyPress={(e) => {
-                    if (e.key === "Enter") {
-                      if (modoDetalhado) {
-                        calcularCampoAutomatico()
-                      } else {
-                        calcular()
-                      }
-                    }
-                  }}
+                  onKeyPress={handleKeyPress}
                   onBlur={calcularCampoAutomatico}
                   placeholder="50.000,00"
                   className="w-full bg-[#0a0f0d] border border-[#1a2520] rounded-lg px-4 pl-12 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#7ef542] transition-colors text-center md:text-left"
@@ -408,15 +448,7 @@ export default function Page() {
                   type="text"
                   value={ticketMedio}
                   onChange={handleTicketMedioChange}
-                  onKeyPress={(e) => {
-                    if (e.key === "Enter") {
-                      if (modoDetalhado) {
-                        calcularCampoAutomatico()
-                      } else {
-                        calcular()
-                      }
-                    }
-                  }}
+                  onKeyPress={handleKeyPress}
                   onBlur={calcularCampoAutomatico}
                   placeholder="297,00"
                   className="w-full bg-[#0a0f0d] border border-[#1a2520] rounded-lg px-4 pl-12 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#7ef542] transition-colors text-center md:text-left"
@@ -435,11 +467,7 @@ export default function Page() {
                     type="text"
                     value={vendasRealizadas}
                     onChange={handleVendasRealizadasChange}
-                    onKeyPress={(e) => {
-                      if (e.key === "Enter") {
-                        calcularCampoAutomatico()
-                      }
-                    }}
+                    onKeyPress={handleKeyPress}
                     onBlur={calcularCampoAutomatico}
                     placeholder="168"
                     className="w-full bg-[#0a0f0d] border border-[#1a2520] rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#7ef542] transition-colors text-center md:text-left"
@@ -471,7 +499,6 @@ export default function Page() {
             Calcular meu lucro perdido
           </button>
 
-          {/* ... Avisos do modo simplificado/detalhado permanecem aqui (sem alterações) ... */}
           {!modoDetalhado && (
             <div className="mt-6 bg-[#111816] rounded-2xl p-8 border border-yellow-600/30 text-center md:text-left">
               <div className="flex flex-col md:flex-row items-center md:items-start gap-3 mb-4">
@@ -737,20 +764,25 @@ export default function Page() {
                 {/* Passo 5: Multiplicador */}
                 <div className="relative">
                   <div className="bg-gradient-to-br from-[#7ef542]/20 to-[#7ef542]/5 rounded-xl p-6 border-2 border-[#7ef542] hover:border-[#7ef542] transition-all">
-                    <div className="flex items-center justify-between">
+                    {/* Correção Mobile: flex-col-reverse para não esmagar o texto */}
+                    <div className="flex flex-col-reverse md:flex-row items-center justify-between gap-4 md:gap-0">
                       <div>
-                        <p className="text-xs text-[#7ef542] uppercase tracking-wide mb-1 font-semibold">
+                        <p className="text-xs text-[#7ef542] uppercase tracking-wide mb-1 font-semibold text-center md:text-left">
                           O Diagnóstico Final
                         </p>
-                        <p className="text-5xl font-bold text-[#7ef542] mb-2">
-                          {(resultados.oportunidadePerdida / resultados.faturamento).toFixed(0)}x
+                        <p className="text-5xl font-bold text-[#7ef542] mb-2 text-center md:text-left">
+                          {resultados.faturamento > 0
+                            ? ((resultados.oportunidadePerdida / resultados.faturamento) * 100).toFixed(2).replace('.', ',')
+                            : "0,00"}%
                         </p>
-                        <p className="text-sm text-white">
-                          Na prática, você está deixando na mesa um valor{" "}
+                        <p className="text-sm text-white text-center md:text-left">
+                          Na prática você está deixando na mesa uma possibilidade de aumento de{" "}
                           <span className="font-semibold text-[#7ef542]">
-                            {(resultados.oportunidadePerdida / resultados.faturamento).toFixed(0)}x maior
+                            {resultados.faturamento > 0
+                              ? ((resultados.oportunidadePerdida / resultados.faturamento) * 100).toFixed(2).replace('.', ',')
+                              : "0,00"}%
                           </span>{" "}
-                          do que o seu faturamento atual de {formatResultCurrency(resultados.faturamento)}
+                          em relação ao seu faturamento atual de {formatResultCurrency(resultados.faturamento)}
                         </p>
                       </div>
                       <div className="text-5xl">🚨</div>
@@ -787,7 +819,7 @@ export default function Page() {
                 <div className="space-y-4">
                   <div>
                     <p className="text-xs text-gray-500 mb-1">Possibilidade de Ganho Mensal</p>
-                    <p className="text-2xl font-bold text-[#7ef542]">
+                    <p className="text-2xl font-bold text-white">
                       +{formatResultCurrency(resultados.recuperacao10.mensal)}
                     </p>
                   </div>
@@ -812,7 +844,7 @@ export default function Page() {
                 <div className="space-y-4">
                   <div>
                     <p className="text-xs text-gray-500 mb-1">Possibilidade de Ganho Mensal</p>
-                    <p className="text-2xl font-bold text-[#7ef542]">
+                    <p className="text-2xl font-bold text-white">
                       +{formatResultCurrency(resultados.recuperacao20.mensal)}
                     </p>
                   </div>
@@ -860,10 +892,10 @@ export default function Page() {
             {/* Seção Unificada: Frases de Impacto (Mensal e Anual) */}
             <div className="mt-16 bg-[#111816] rounded-2xl p-8 md:p-10 border border-[#1a2520]">
               <div className="grid md:grid-cols-2 gap-10 items-center">
-                {/* Frase 1: Mensal - PERSONALIZADA */}
+                {/* Frase 1: Mensal */}
                 <div>
-                  <h3 className="text-3xl md:text-4xl font-bold leading-tight text-center">
-                    {nomeLead}, faria diferença pra você hoje ter mais{" "}
+                  <h3 className="text-3xl md:text-4xl font-bold leading-tight text-center md:text-left">
+                    {renderDynamicHeadline(nomeLead, "faria diferença pra você hoje ter mais ")}
                     <span className="text-[#7ef542]">{formatResultCurrency(resultados.recuperacao10.mensal)}</span> no
                     seu bolso todo mês?
                   </h3>
@@ -871,7 +903,7 @@ export default function Page() {
 
                 {/* Frase 2: Anual */}
                 <div className="md:border-l md:border-[#1a2520] md:pl-10">
-                  <h3 className="text-3xl md:text-4xl font-bold leading-tight text-center">
+                  <h3 className="text-3xl md:text-4xl font-bold leading-tight text-center md:text-left">
                     E acumular{" "}
                     <span className="text-[#7ef542]">{formatResultCurrency(resultados.recuperacao10.anual)}</span> para
                     a realização daquele sonho adiado tantas vezes seria espetacular, não seria?
@@ -1034,8 +1066,8 @@ export default function Page() {
             <div className="mt-12 bg-[#111816] rounded-2xl p-8 border border-[#1a2520]">
               <div className="text-center mb-8">
                 <h3 className="text-xl md:text-3xl font-bold leading-tight">
-                  {nomeLead}, e quanto você acha que custa para ter esse resultado?
-                  <br />E o melhor: <span className="text-[#7ef542]">com risco zero!</span>
+                  {renderDynamicHeadline(nomeLead, "e se eu dissesse que você também pode ter esse resultado?")}
+                  <br />E o melhor: com <span className="text-[#7ef542]">RISCO ZERO</span>{" "} de investir e não ter retorno <span className="text-[#7ef542]"><br />ASSINADO EM CONTRATO!</span>
                 </h3>
               </div>
 
@@ -1047,7 +1079,7 @@ export default function Page() {
                   className="w-full bg-[#7ef542] hover:bg-[#6ee032] text-[#0a0f0d] font-bold py-6 px-8 rounded-lg transition-colors text-center block no-underline"
                 >
                   <span className="uppercase md:text-base leading-tight block text-[24px]">
-                    Quero {formatResultCurrency(resultados.recuperacao10.mensal)} a mais no meu bolso todos os meses
+                    QUERO {formatResultCurrency(resultados.recuperacao10.mensal)} A MAIS NO MEU BOLSO TODOS OS MESES COM RISCO ZERO
                   </span>
                 </a>
               </div>
