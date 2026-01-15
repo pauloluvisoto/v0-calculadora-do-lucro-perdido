@@ -822,6 +822,8 @@ export default function Page() {
               * Taxas de Conversão Atingidas no decorrer dos Testes de Validação da Recupera.ia
             </p>
 
+            {/* --- TRECHO CORRIGIDO --- */}
+
             {/* Seção Unificada: Frases de Impacto */}
             <div className="mt-16 bg-[#111816] rounded-2xl p-8 md:p-10 border border-[#1a2520]">
               <div className="grid md:grid-cols-2 gap-10 items-center">
@@ -842,7 +844,24 @@ export default function Page() {
               </div>
             </div>
 
-            {/* SEÇÃO EDUCATIVA EXPANDIDA E PERSONALIZADA */}
+            {/* NOVA SEÇÃO: CABEÇALHO DA LÓGICA DA EFICIÊNCIA (INSERIDO AQUI) */}
+            <div className="text-center mb-12 max-w-4xl mx-auto mt-24">
+              <div className="inline-block bg-[#7ef542] text-[#0a0f0d] px-6 py-2 rounded-full font-bold text-xs uppercase tracking-wide mb-6">
+                💡 A VERDADE QUE NINGUÉM TE CONTA
+              </div>
+              
+              <h3 className="text-3xl md:text-5xl font-bold text-white leading-tight mb-6">
+                A Lógica da Eficiência
+                <br />
+                <span className="block mt-2">Por que você ignora o lucro que já está "em casa"?</span>
+              </h3>
+              
+              <p className="text-lg text-gray-400 leading-relaxed">
+                No mercado de infoprodutos atual, o lucro real não está em quem você ainda vai atrair, mas em parar de negligenciar quem já está com o cartão na mão. O custo de aquisição está cada vez mais alto, e focar apenas na "batalha externa" por novos leads é uma falha de gestão que drena sua margem todos os meses.
+              </p>
+            </div>
+
+            {/* SEÇÃO EDUCATIVA EXPANDIDA E PERSONALIZADA (OS 4 CARDS COMEÇAM AQUI) */}
             <div className="grid md:grid-cols-2 gap-6 mb-8 text-left">
               
               {/* Bloco 1 — A Anatomia do Desperdício */}
@@ -862,6 +881,8 @@ export default function Page() {
                   </p>
                 </div>
               </div>
+
+{/* ... O resto dos cards continua abaixo ... */}
 
               {/* Bloco 2 — O Ativo de Maior Valor */}
               <div className="bg-gradient-to-br from-gray-50 to-white rounded-xl p-6 border-2 border-gray-200 hover:border-[#7ef542] transition-all shadow-sm">
@@ -926,8 +947,8 @@ export default function Page() {
             {/* SEÇÃO DE PROVA SOCIAL (DEPOIMENTOS) */}
             <div className="mt-12">
               <div className="text-center mb-8">
-                <h3 className="text-2xl font-bold mb-2 text-white">Veja alguns números</h3>
-                <p className="text-gray-400">Resultados reais de quem ja confia na Recupera.ia</p>
+                <h3 className="text-2xl font-bold mb-2 text-white"><span className="text-[#7ef542] font-bold">Resultados Reais: O que acontece quando você estanca o vazamento</span></h3>
+                <p className="text-gray-400">O lucro que você ignora, nós recuperamos. Veja o impacto financeiro real da Recupera.ia em alguns dos nossos clientes.</p>
               </div>
 
               <div className="grid md:grid-cols-3 gap-6">
@@ -939,14 +960,14 @@ export default function Page() {
                   </div>
 
                   <div className="mb-4">
-                    <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide mb-2">O CENÁRIO:</p>
+                    <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide mb-2">CENÁRIO:</p>
                     <p className="text-sm text-gray-300 text-[13px]">
                       R$ 116.955,00 em assinaturas não concluídas. Todos os meses.
                     </p>
                   </div>
 
                   <div className="mb-4 flex-grow">
-                    <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide mb-2">O RESULTADO:</p>
+                    <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide mb-2">LUCRO RECUPERADO PELA NOSSA IA:</p>
                     <p className="text-sm text-gray-300 mb-4">
                       Em apenas um mês, a Recupera.ia colocou <span className="text-[#7ef542] font-bold">R$ 35.866,20</span> de volta no caixa do cliente, recuperando <span className="text-white font-bold">138 leads</span> que já eram considerados perdidos.
                     </p>
@@ -968,14 +989,14 @@ export default function Page() {
                   </div>
 
                   <div className="mb-4">
-                    <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide mb-2">O CENÁRIO:</p>
+                    <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide mb-2">CENÁRIO:</p>
                     <p className="text-sm text-gray-300 text-[13px]">
                       R$ 32.040,00 em potencial de vendas evaporando a cada 30 dias.
                     </p>
                   </div>
 
                   <div className="mb-4 flex-grow">
-                    <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide mb-2">O RESULTADO:</p>
+                    <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide mb-2">LUCRO RECUPERADO PELA NOSSA IA:</p>
                     <p className="text-sm text-gray-300 mb-4">
                       Nossa IA Conversacional recuperou <span className="text-white font-bold">107 clientes</span>, gerando <span className="text-[#7ef542] font-bold">R$ 19.260,00</span> em faturamento extra e atingindo uma taxa de conversão que nenhuma outra ferramenta chegou perto.
                     </p>
@@ -997,14 +1018,14 @@ export default function Page() {
                   </div>
 
                   <div className="mb-4">
-                    <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide mb-2">O CENÁRIO:</p>
+                    <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide mb-2">CENÁRIO:</p>
                     <p className="text-sm text-gray-300 text-[13px]">
                       Um vazamento massivo de mais de R$ 715.000,00 por mês em depósitos não realizados.
                     </p>
                   </div>
 
                   <div className="mb-4 flex-grow">
-                    <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide mb-2">O RESULTADO:</p>
+                    <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide mb-2">LUCRO RECUPERADO PELA NOSSA IA:</p>
                     <p className="text-sm text-gray-300 mb-4">
                       Mesmo com um ticket baixo, nosso fluxo recuperou <span className="text-white font-bold">13.745 usuários</span>, injetando <span className="text-[#7ef542] font-bold">R$ 68.725,00</span> de receita adicional que antes era completamente perdida.
                     </p>
@@ -1024,14 +1045,14 @@ export default function Page() {
             <div className="mt-12 bg-[#111816] rounded-2xl p-8 border border-[#1a2520]">
               <div className="text-center mb-8">
                 <h3 className="text-xl md:text-3xl font-bold leading-tight">
-                  {renderDynamicHeadline(nomeLead, "e se eu dissesse que você também pode ter esse resultado?")}
+                  E se eu dissesse que você também pode ter esse resultado?"
                   
                   <div className="mt-6 space-y-2">
                     <p>
                       E o melhor{nomeLead ? `, ${nomeLead}` : ""}, com <span className="text-[#7ef542]">RISCO ZERO</span> para você.
                     </p>
                     <p>
-                      <span className="text-[#7ef542]">GARANTIMOS</span> o seu <span className="text-[#7ef542]">RETORNO EM CONTRATO</span>:
+                      <span className="text-[#7ef542]">GARANTIMOS</span> o seu <span className="text-[#7ef542]">RETORNO EM CONTRATO:</span>
                     </p>
                     <p>
                       Se não recuperarmos o <span className="text-[#7ef542]">DOBRO DO SEU INVESTIMENTO</span>, você não paga nada.
@@ -1048,7 +1069,7 @@ export default function Page() {
                   className="w-full bg-[#7ef542] hover:bg-[#6ee032] text-[#0a0f0d] font-bold py-6 px-8 rounded-lg transition-colors text-center block no-underline"
                 >
                   <span className="uppercase md:text-base leading-tight block text-[24px]">
-                    QUERO {formatResultCurrency(resultados.recuperacao10.mensal)} A MAIS NO MEU BOLSO TODOS OS MESES COM RISCO ZERO
+                    QUERO RESGATAR MEUS {formatResultCurrency(resultados.recuperacao10.mensal)} E PARAR DE PERDER DINHEIRO AGORA
                   </span>
                 </a>
               </div>
