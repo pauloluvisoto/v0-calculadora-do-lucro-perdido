@@ -16,7 +16,6 @@ import {
   Activity,
   Target,
   HelpCircle,
-  Download,
 } from "lucide-react"
 
 export default function Page() {
@@ -36,8 +35,7 @@ export default function Page() {
   const [taxaConversao, setTaxaConversao] = useState("")
   const [investimentoTrafego, setInvestimentoTrafego] = useState("")
   const [frequenciaCompra, setFrequenciaCompra] = useState("")
-  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false)
-
+  
   const [campoAutoCalculado, setCampoAutoCalculado] = useState<"faturamento" | "ticket" | "vendas" | null>(null)
 
   // --- ESTADO DE RESULTADOS ---
@@ -60,17 +58,10 @@ export default function Page() {
     recuperacao10: { mensal: number; anual: number }
     recuperacao20: { mensal: number; anual: number }
     recuperacao34: { mensal: number; anual: number }
-
-    // Novos campos adicionados para PDF
     carrinhosAbandonados: number
-    lucroTotalPerdido: number
-    cenario1: { percentualRecuperacao: number; faturamentoExtra: number; roi: number }
-    cenario2: { percentualRecuperacao: number; faturamentoExtra: number; roi: number }
-    cenario3: { percentualRecuperacao: number; faturamentoExtra: number; roi: number }
   } | null>(null)
 
   const resultadosRef = useRef<HTMLDivElement>(null)
-  const reportRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     setResultados(null)
@@ -78,26 +69,7 @@ export default function Page() {
 
   // --- FUNÇÕES AUXILIARES E VALIDAÇÃO ---
 
-  const badWords = [
-    "teste",
-    "test",
-    "admin",
-    "merda",
-    "bosta",
-    "caralho",
-    "puta",
-    "viado",
-    "cu",
-    "buceta",
-    "pinto",
-    "burro",
-    "idiota",
-    "desgraça",
-    "foda",
-    "corno",
-    "pau",
-    "chupa",
-  ]
+  const badWords = ["teste", "test", "admin", "merda", "bosta", "caralho", "puta", "viado", "cu", "buceta", "pinto", "burro", "idiota", "desgraça", "foda", "corno", "pau", "chupa"]
 
   const containsProfanity = (text: string) => {
     if (!text) return false
@@ -106,11 +78,7 @@ export default function Page() {
 
   const formatText = (text: string) => {
     if (!text) return ""
-    return text
-      .toLowerCase()
-      .split(" ")
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(" ")
+    return text.toLowerCase().split(" ").map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(" ")
   }
 
   const renderDynamicHeadline = (name: string, sentence: string) => {
@@ -163,18 +131,14 @@ export default function Page() {
     return Number(numbers) / 100
   }
 
-  const handleMonetaryChange =
-    (setter: React.Dispatch<React.SetStateAction<string>>) => (e: React.ChangeEvent<HTMLInputElement>) => {
-      setter(formatCurrency(e.target.value))
-      // Chama o calculo automatico logo apos setar o estado (embora o estado n tenha atualizado ainda no ciclo, passamos o valor novo manualmente se necessario, ou usamos useEffect.
-      // Aqui vamos confiar no onBlur paraRecalculo pesado, mas tentar atualizar se possivel)
-    }
+  const handleMonetaryChange = (setter: React.Dispatch<React.SetStateAction<string>>) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    setter(formatCurrency(e.target.value))
+  }
 
-  const handleNumericChange =
-    (setter: React.Dispatch<React.SetStateAction<string>>) => (e: React.ChangeEvent<HTMLInputElement>) => {
-      const val = e.target.value.replace(/\D/g, "")
-      setter(val)
-    }
+  const handleNumericChange = (setter: React.Dispatch<React.SetStateAction<string>>) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value.replace(/\D/g, "")
+    setter(val)
+  }
 
   const handleTaxaConversaoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/[^\d.,]/g, "")
@@ -183,13 +147,11 @@ export default function Page() {
     setTaxaConversao(value)
   }
 
-  // Lógica corrigida para garantir consistência matemática
   const calcularCampoAutomatico = () => {
     const fat = parseCurrency(faturamento)
     const ticket = parseCurrency(ticketMedio)
     const vendas = Number(vendasRealizadas) || 0
 
-    // Se temos Faturamento e Ticket, Vendas é calculado
     if (fat > 0 && ticket > 0) {
       const calculatedVendas = Math.round(fat / ticket)
       setVendasRealizadas(String(calculatedVendas))
@@ -197,7 +159,6 @@ export default function Page() {
       return
     }
 
-    // Se temos Vendas e Ticket, Faturamento é calculado
     if (vendas > 0 && ticket > 0 && fat === 0) {
       const calculatedFat = vendas * ticket
       const formatted = new Intl.NumberFormat("pt-BR", {
@@ -217,12 +178,7 @@ export default function Page() {
       return
     }
 
-    if (
-      containsProfanity(nomeLead) ||
-      containsProfanity(nomeProduto) ||
-      containsProfanity(tipoProduto) ||
-      containsProfanity(nicho)
-    ) {
+    if (containsProfanity(nomeLead) || containsProfanity(nomeProduto) || containsProfanity(tipoProduto) || containsProfanity(nicho)) {
       alert("Por favor, utilize termos adequados nos campos de texto.")
       return
     }
@@ -249,14 +205,10 @@ export default function Page() {
       const vendasInput = Number(vendasRealizadas)
       const taxaInput = Number.parseFloat(taxaConversao.replace(",", "."))
 
-      // Validação de consistência básica
       if (vendasInput <= 0 || !taxaInput || taxaInput <= 0) {
         alert("Por favor, preencha o número de vendas e a taxa de conversão corretamente.")
         return
       }
-
-      // Proteção contra inputs matematicamente impossíveis (ex: mais vendas que faturamento/ticket permitiria com margem de erro)
-      // Mas respeitaremos o input do usuário se ele for "possível"
 
       const totalVisitasCheckout = vendasInput / (taxaInput / 100)
       const abandonosCalculados = totalVisitasCheckout - vendasInput
@@ -266,7 +218,6 @@ export default function Page() {
       visitasEstimadas = Math.round(totalVisitasCheckout)
       taxaAtual = taxaInput
     } else {
-      // Modo Simplificado (3x)
       vendas = Math.round(fat / ticket)
       carrinhosAband = vendas * 3
       taxaAtual = 25
@@ -274,7 +225,6 @@ export default function Page() {
     }
 
     const oportunidadePerdida = carrinhosAband * ticket
-
     let desperdicio = 0
     let ineficiencia = 0
 
@@ -296,23 +246,6 @@ export default function Page() {
     const recuperacao20 = oportunidadePerdida * 0.2
     const recuperacao34 = oportunidadePerdida * 0.34
 
-    // Cálculo dos cenários para PDF
-    const cenario1 = {
-      percentualRecuperacao: 10,
-      faturamentoExtra: oportunidadePerdida * 0.1,
-      roi: (oportunidadePerdida * 0.1) / (investimentoAd > 0 ? investimentoAd * 0.1 : 1), // Simplificado
-    }
-    const cenario2 = {
-      percentualRecuperacao: 20,
-      faturamentoExtra: oportunidadePerdida * 0.2,
-      roi: (oportunidadePerdida * 0.2) / (investimentoAd > 0 ? investimentoAd * 0.2 : 1),
-    }
-    const cenario3 = {
-      percentualRecuperacao: 34,
-      faturamentoExtra: oportunidadePerdida * 0.34,
-      roi: (oportunidadePerdida * 0.34) / (investimentoAd > 0 ? investimentoAd * 0.34 : 1),
-    }
-
     setResultados({
       faturamento: fat,
       ticketMedio: ticket,
@@ -332,64 +265,12 @@ export default function Page() {
       recuperacao10: { mensal: recuperacao10, anual: recuperacao10 * 12 },
       recuperacao20: { mensal: recuperacao20, anual: recuperacao20 * 12 },
       recuperacao34: { mensal: recuperacao34, anual: recuperacao34 * 12 },
-
-      // Adicionando novos campos para o PDF
       carrinhosAbandonados: carrinhosAband,
-      lucroTotalPerdido: oportunidadePerdida, // Assumindo que oportunidadePerdida é o lucro total perdido mensal
-      cenario1: cenario1,
-      cenario2: cenario2,
-      cenario3: cenario3,
     })
 
     setTimeout(() => {
       resultadosRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
     }, 100)
-  }
-
-  // --- GERADOR DE PDF (AUDITORIA TÉCNICA) ---
-  const generatePDF = async () => {
-    if (!reportRef.current || !resultados) return
-    setIsGeneratingPdf(true)
-
-    try {
-      const pdf = new jsPDF('p', 'mm', 'a4')
-      const pages = reportRef.current.children
-
-      for (let i = 0; i < pages.length; i++) {
-        const page = pages[i] as HTMLElement
-        // Renderização forçada sem Tailwind classes para evitar erros de cor (oklch)
-        const canvas = await html2canvas(page, {
-          scale: 2,
-          backgroundColor: "#0a0f0d", // Garante fundo preto exato
-          useCORS: true,
-          logging: false
-        })
-        
-        const imgData = canvas.toDataURL('image/png')
-        // Adiciona página se não for a primeira
-        if (i > 0) pdf.addPage()
-        // Adiciona imagem cobrindo a folha A4 inteira (210x297mm)
-        pdf.addImage(imgData, 'PNG', 0, 0, 210, 297)
-      }
-
-      pdf.save(`Auditoria_Tecnica_RecuperaIA_${nomeLead.replace(/\s+/g, '_')}.pdf`)
-    } catch (error) {
-      console.error("Erro ao gerar PDF", error)
-      alert("Ocorreu um erro ao gerar seu PDF. Tente novamente.")
-    } finally {
-      setIsGeneratingPdf(false)
-    }
-  }
-
-      // Fallback if onload doesn't fire
-      setTimeout(() => {
-        setIsGeneratingPdf(false)
-      }, 3000)
-    } catch (error) {
-      console.error("Erro ao gerar PDF", error)
-      alert("Ocorreu um erro ao gerar seu PDF. Tente novamente.")
-      setIsGeneratingPdf(false)
-    }
   }
 
   // --- HELPERS DE EXIBIÇÃO ---
@@ -425,34 +306,6 @@ export default function Page() {
     }
   }
 
-  // --- TEXTOS DO DIAGNÓSTICO (PDF) ---
-  const getDiagnosisTexts = (rate: number) => {
-    if (rate < 30)
-      return {
-        title: "Vazamento Crítico Identificado",
-        tech: "Seu checkout apresenta um vazamento grave. Nesta faixa, o problema geralmente é técnico ou de extrema fricção.",
-        cause: "Possíveis causas: Lentidão no carregamento, excesso de campos ou falta de confiança.",
-        verdict:
-          "Veredito: Você está pagando caro para atrair visitantes e os 'expulsa' na hora do pagamento. A recuperação ativa é sobrevivência.",
-      }
-    if (rate <= 60)
-      return {
-        title: "Zona de Estagnação (Padrão)",
-        tech: "Você está na média de mercado. Sua oferta é boa, mas sua operação é passiva.",
-        cause:
-          "Possíveis causas: Falta de fluxo humanizado para Pix/Boletos e ausência de resgate de cartões recusados.",
-        verdict:
-          "Veredito: Você está em um platô. Metade do lucro potencial fica na mesa por falta de intervenção imediata.",
-      }
-    return {
-      title: "Alta Performance com Risco de Escala",
-      tech: "Sua operação é eficiente, mas você atingiu o teto da conversão passiva.",
-      cause: "Mesmo em checkouts excelentes, 40% não compram por motivos externos (limite, esquecimento).",
-      verdict:
-        "Veredito: Na escala, esses 40% representam seu maior lucro líquido desperdiçado. Recuperar 1/4 disso dobra sua margem.",
-    }
-  }
-
   return (
     <div className="min-h-screen bg-[#0a0f0d] text-white">
       <div className="max-w-6xl mx-auto px-6 py-12">
@@ -477,18 +330,8 @@ export default function Page() {
             </div>
 
             <div className="flex items-center gap-2 bg-[#0a0f0d] rounded-lg p-1 border border-[#1a2520]">
-              <button
-                onClick={() => setModoDetalhado(false)}
-                className={`px-4 py-2 rounded-md text-xs font-semibold transition-all ${!modoDetalhado ? "bg-[#7ef542] text-[#0a0f0d]" : "text-gray-400 hover:text-white"}`}
-              >
-                Simplificado
-              </button>
-              <button
-                onClick={() => setModoDetalhado(true)}
-                className={`px-4 py-2 rounded-md text-xs font-semibold transition-all ${modoDetalhado ? "bg-[#7ef542] text-[#0a0f0d]" : "text-gray-400 hover:text-white"}`}
-              >
-                Detalhado
-              </button>
+              <button onClick={() => setModoDetalhado(false)} className={`px-4 py-2 rounded-md text-xs font-semibold transition-all ${!modoDetalhado ? "bg-[#7ef542] text-[#0a0f0d]" : "text-gray-400 hover:text-white"}`}>Simplificado</button>
+              <button onClick={() => setModoDetalhado(true)} className={`px-4 py-2 rounded-md text-xs font-semibold transition-all ${modoDetalhado ? "bg-[#7ef542] text-[#0a0f0d]" : "text-gray-400 hover:text-white"}`}>Detalhado</button>
             </div>
           </div>
 
@@ -498,27 +341,14 @@ export default function Page() {
               <label className="flex items-center justify-center md:justify-start gap-2 text-[#7ef542] text-sm mb-2">
                 <User className="w-4 h-4" /> Nome <span className="text-red-500">*</span>
               </label>
-              <input
-                type="text"
-                value={nomeLead}
-                onChange={(e) => setNomeLead(e.target.value)}
-                placeholder="Seu nome completo"
-                className="w-full bg-[#0a0f0d] border border-[#1a2520] rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#7ef542] transition-colors text-center md:text-left"
-              />
+              <input type="text" value={nomeLead} onChange={(e) => setNomeLead(e.target.value)} placeholder="Seu nome completo" className="w-full bg-[#0a0f0d] border border-[#1a2520] rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#7ef542] transition-colors text-center md:text-left" />
             </div>
 
             <div>
               <label className="flex items-center justify-center md:justify-start gap-2 text-[#7ef542] text-sm mb-2">
                 <Smartphone className="w-4 h-4" /> Nº Whatsapp <span className="text-red-500">*</span>
               </label>
-              <input
-                type="text"
-                value={whatsapp}
-                onChange={handleWhatsappChange}
-                onBlur={handleWhatsappBlur}
-                placeholder="(00) 00000-0000"
-                className="w-full bg-[#0a0f0d] border border-[#1a2520] rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#7ef542] transition-colors text-center md:text-left"
-              />
+              <input type="text" value={whatsapp} onChange={handleWhatsappChange} onBlur={handleWhatsappBlur} placeholder="(00) 00000-0000" className="w-full bg-[#0a0f0d] border border-[#1a2520] rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#7ef542] transition-colors text-center md:text-left" />
               <p className="text-[10px] text-gray-500 mt-1 text-center md:text-left">
                 Se o número não for do Brasil (+55), insira o código do país.
               </p>
@@ -528,39 +358,21 @@ export default function Page() {
               <label className="flex items-center justify-center md:justify-start gap-2 text-[#7ef542] text-sm mb-2">
                 <Package className="w-4 h-4" /> Nome do Produto
               </label>
-              <input
-                type="text"
-                value={nomeProduto}
-                onChange={(e) => setNomeProduto(e.target.value)}
-                placeholder="Ex: Método X (Opcional)"
-                className="w-full bg-[#0a0f0d] border border-[#1a2520] rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#7ef542] transition-colors text-center md:text-left"
-              />
+              <input type="text" value={nomeProduto} onChange={(e) => setNomeProduto(e.target.value)} placeholder="Ex: Método X (Opcional)" className="w-full bg-[#0a0f0d] border border-[#1a2520] rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#7ef542] transition-colors text-center md:text-left" />
             </div>
 
             <div>
               <label className="flex items-center justify-center md:justify-start gap-2 text-[#7ef542] text-sm mb-2">
                 <Tag className="w-4 h-4" /> Tipo de Produto
               </label>
-              <input
-                type="text"
-                value={tipoProduto}
-                onChange={(e) => setTipoProduto(e.target.value)}
-                placeholder="Ex: Curso, Mentoria (Opcional)"
-                className="w-full bg-[#0a0f0d] border border-[#1a2520] rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#7ef542] transition-colors text-center md:text-left"
-              />
+              <input type="text" value={tipoProduto} onChange={(e) => setTipoProduto(e.target.value)} placeholder="Ex: Curso, Mentoria (Opcional)" className="w-full bg-[#0a0f0d] border border-[#1a2520] rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#7ef542] transition-colors text-center md:text-left" />
             </div>
 
             <div className="md:col-span-2">
               <label className="flex items-center justify-center md:justify-start gap-2 text-[#7ef542] text-sm mb-2">
                 <Briefcase className="w-4 h-4" /> Nicho de Atuação
               </label>
-              <input
-                type="text"
-                value={nicho}
-                onChange={(e) => setNicho(e.target.value)}
-                placeholder="Ex: Saúde, Finanças (Opcional)"
-                className="w-full bg-[#0a0f0d] border border-[#1a2520] rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#7ef542] transition-colors text-center md:text-left"
-              />
+              <input type="text" value={nicho} onChange={(e) => setNicho(e.target.value)} placeholder="Ex: Saúde, Finanças (Opcional)" className="w-full bg-[#0a0f0d] border border-[#1a2520] rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#7ef542] transition-colors text-center md:text-left" />
             </div>
 
             {/* === CAMPOS DE CÁLCULO === */}
@@ -568,62 +380,36 @@ export default function Page() {
               <label className="flex items-center justify-center md:justify-start gap-2 text-[#7ef542] text-sm mb-2">
                 <DollarSign className="w-4 h-4" /> Faturamento mensal <span className="text-red-500">*</span>
               </label>
-              <input
-                type="text"
-                value={faturamento}
-                onChange={handleMonetaryChange(setFaturamento)}
-                onKeyPress={handleKeyPress}
-                onBlur={calcularCampoAutomatico}
-                placeholder="50.000,00"
-                className="w-full bg-[#0a0f0d] border border-[#1a2520] rounded-lg px-4 pl-12 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#7ef542] transition-colors text-center md:text-left"
-              />
+              <div className="relative">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">R$</span>
+                <input type="text" value={faturamento} onChange={handleMonetaryChange(setFaturamento)} onKeyPress={handleKeyPress} onBlur={calcularCampoAutomatico} placeholder="50.000,00" className="w-full bg-[#0a0f0d] border border-[#1a2520] rounded-lg px-4 pl-12 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#7ef542] transition-colors text-center md:text-left" />
+              </div>
             </div>
 
             <div>
               <label className="flex items-center justify-center md:justify-start gap-2 text-[#7ef542] text-sm mb-2">
                 <TrendingUp className="w-4 h-4" /> Ticket médio do produto <span className="text-red-500">*</span>
               </label>
-              <input
-                type="text"
-                value={ticketMedio}
-                onChange={handleMonetaryChange(setTicketMedio)}
-                onKeyPress={handleKeyPress}
-                onBlur={calcularCampoAutomatico}
-                placeholder="297,00"
-                className="w-full bg-[#0a0f0d] border border-[#1a2520] rounded-lg px-4 pl-12 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#7ef542] transition-colors text-center md:text-left"
-              />
+              <div className="relative">
+                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">R$</span>
+                 <input type="text" value={ticketMedio} onChange={handleMonetaryChange(setTicketMedio)} onKeyPress={handleKeyPress} onBlur={calcularCampoAutomatico} placeholder="297,00" className="w-full bg-[#0a0f0d] border border-[#1a2520] rounded-lg px-4 pl-12 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#7ef542] transition-colors text-center md:text-left" />
+              </div>
             </div>
 
             {modoDetalhado && (
               <>
                 <div>
                   <label className="flex items-center justify-center md:justify-start gap-2 text-[#7ef542] text-sm mb-2">
-                    <TrendingUp className="w-4 h-4" /> Número de vendas realizadas no mês{" "}
-                    <span className="text-red-500">*</span>
+                    <TrendingUp className="w-4 h-4" /> Número de vendas realizadas no mês <span className="text-red-500">*</span>
                   </label>
-                  <input
-                    type="text"
-                    value={vendasRealizadas}
-                    onChange={handleNumericChange(setVendasRealizadas)}
-                    onKeyPress={handleKeyPress}
-                    onBlur={calcularCampoAutomatico}
-                    placeholder="168"
-                    className="w-full bg-[#0a0f0d] border border-[#1a2520] rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#7ef542] transition-colors text-center md:text-left"
-                  />
+                  <input type="text" value={vendasRealizadas} onChange={handleNumericChange(setVendasRealizadas)} onKeyPress={handleKeyPress} onBlur={calcularCampoAutomatico} placeholder="168" className="w-full bg-[#0a0f0d] border border-[#1a2520] rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#7ef542] transition-colors text-center md:text-left" />
                 </div>
 
                 <div>
                   <label className="flex items-center justify-center md:justify-start gap-2 text-[#7ef542] text-sm mb-2">
                     <Percent className="w-4 h-4" /> Taxa de Conversão Checkout (%)
                   </label>
-                  <input
-                    type="text"
-                    value={taxaConversao}
-                    onChange={handleTaxaConversaoChange}
-                    onKeyPress={handleKeyPress}
-                    placeholder="Ex: 15,00"
-                    className="w-full bg-[#0a0f0d] border border-[#1a2520] rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#7ef542] transition-colors text-center md:text-left"
-                  />
+                  <input type="text" value={taxaConversao} onChange={handleTaxaConversaoChange} onKeyPress={handleKeyPress} placeholder="Ex: 15,00" className="w-full bg-[#0a0f0d] border border-[#1a2520] rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#7ef542] transition-colors text-center md:text-left" />
                   <p className="text-[10px] text-gray-500 mt-1 text-center md:text-left">
                     Consulte o dashboard da sua plataforma (Hotmart/Kiwify).
                   </p>
@@ -636,35 +422,20 @@ export default function Page() {
                   </label>
                   <div className="relative">
                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">R$</span>
-                    <input
-                      type="text"
-                      value={investimentoTrafego}
-                      onChange={handleMonetaryChange(setInvestimentoTrafego)}
-                      placeholder="10.000,00 (Opcional)"
-                      className="w-full bg-[#0a0f0d] border border-[#1a2520] rounded-lg px-4 pl-12 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#7ef542] transition-colors text-center md:text-left"
-                    />
+                    <input type="text" value={investimentoTrafego} onChange={handleMonetaryChange(setInvestimentoTrafego)} placeholder="10.000,00 (Opcional)" className="w-full bg-[#0a0f0d] border border-[#1a2520] rounded-lg px-4 pl-12 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#7ef542] transition-colors text-center md:text-left" />
                   </div>
                 </div>
                 <div>
                   <label className="flex items-center justify-center md:justify-start gap-2 text-[#7ef542] text-sm mb-2">
                     <Briefcase className="w-4 h-4" /> Compras por cliente/ano (LTV)
                   </label>
-                  <input
-                    type="text"
-                    value={frequenciaCompra}
-                    onChange={handleNumericChange(setFrequenciaCompra)}
-                    placeholder="Ex: 2 (Se vender mais de 1x)"
-                    className="w-full bg-[#0a0f0d] border border-[#1a2520] rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#7ef542] transition-colors text-center md:text-left"
-                  />
+                  <input type="text" value={frequenciaCompra} onChange={handleNumericChange(setFrequenciaCompra)} placeholder="Ex: 2 (Se vender mais de 1x)" className="w-full bg-[#0a0f0d] border border-[#1a2520] rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#7ef542] transition-colors text-center md:text-left" />
                 </div>
               </>
             )}
           </div>
 
-          <button
-            onClick={calcular}
-            className="w-full bg-[#7ef542] hover:bg-[#6ee032] text-[#0a0f0d] font-bold py-4 rounded-lg transition-colors uppercase"
-          >
+          <button onClick={calcular} className="w-full bg-[#7ef542] hover:bg-[#6ee032] text-[#0a0f0d] font-bold py-4 rounded-lg transition-colors uppercase">
             Gerar Diagnóstico Financeiro
           </button>
 
@@ -784,23 +555,7 @@ export default function Page() {
         {/* --- RESULTADOS --- */}
         {resultados && (
           <div ref={resultadosRef} className="space-y-8">
-            {/* BOTÃO DE DOWNLOAD PDF */}
-            <div className="flex justify-end mb-4">
-              <button
-                onClick={generatePDF}
-                disabled={isGeneratingPdf}
-                className="flex items-center gap-2 bg-[#1a2520] hover:bg-[#7ef542] hover:text-[#0a0f0d] text-[#7ef542] border border-[#7ef542] px-4 py-2 rounded-lg transition-all font-bold text-sm"
-              >
-                {isGeneratingPdf ? (
-                  <>Gerando Auditoria...</>
-                ) : (
-                  <>
-                    <Download className="w-4 h-4" /> Baixar Auditoria PDF Completa
-                  </>
-                )}
-              </button>
-            </div>
-
+            
             {/* 1. Diagnóstico de Saúde */}
             <div className="bg-[#111816] rounded-2xl p-8 border border-[#1a2520]">
               <div className="flex items-center gap-3 mb-6 justify-center md:justify-start">
@@ -1059,18 +814,18 @@ export default function Page() {
               * Taxas de Conversão Atingidas no decorrer dos Testes de Validação da Recupera.ia
             </p>
 
-            {/* Seção Unificada: Frases de Impacto */}
+{/* Seção Unificada: Frases de Impacto */}
             <div className="mt-16 bg-[#111816] rounded-2xl p-8 md:p-10 border border-[#1a2520]">
               <div className="grid md:grid-cols-2 gap-10 items-center">
-                <div>
-                  <h3 className="text-3xl md:text-4xl font-bold leading-tight text-center md:text-left">
+                <div className="text-center">
+                  <h3 className="text-3xl md:text-4xl font-bold leading-tight">
                     {renderDynamicHeadline(nomeLead, "faria diferença pra você hoje ter mais ")}
                     <span className="text-[#7ef542]">{formatResultCurrency(resultados.recuperacao10.mensal)}</span> no
                     seu bolso todo mês?
                   </h3>
                 </div>
-                <div className="md:border-l md:border-[#1a2520] md:pl-10">
-                  <h3 className="text-3xl md:text-4xl font-bold leading-tight text-center md:text-left">
+                <div className="md:border-l md:border-[#1a2520] md:pl-10 text-center">
+                  <h3 className="text-3xl md:text-4xl font-bold leading-tight">
                     E acumular{" "}
                     <span className="text-[#7ef542]">{formatResultCurrency(resultados.recuperacao10.anual)}</span> para
                     a realização daquele sonho adiado tantas vezes seria espetacular, não seria?
@@ -1250,10 +1005,7 @@ export default function Page() {
                   <div className="mb-4 flex-grow">
                     <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide mb-2">O RESULTADO:</p>
                     <p className="text-sm text-gray-300 mb-4">
-                      Em apenas um mês, a Recupera.ia colocou{" "}
-                      <span className="text-[#7ef542] font-bold">R$ 35.866,20</span> de volta no caixa do cliente,
-                      recuperando <span className="text-white font-bold">138 leads</span> que já eram considerados
-                      perdidos.
+                      Em apenas um mês, a Recupera.ia colocou <span className="text-[#7ef542] font-bold">R$ 35.866,20</span> de volta no caixa do cliente, recuperando <span className="text-white font-bold">138 leads</span> que já eram considerados perdidos.
                     </p>
                     <div className="border border-[#7ef542]/50 bg-[#7ef542]/5 rounded-lg p-3 mb-4">
                       <p className="text-[#7ef542] font-bold text-center text-sm">Taxa de Conversão de 30,66%</p>
@@ -1261,8 +1013,7 @@ export default function Page() {
                   </div>
 
                   <blockquote className="text-xs text-gray-500 italic mt-auto">
-                    "É um dinheiro que simplesmente não existia para nós. A Recupera.ia não só pagou o investimento no
-                    primeiro dia, como criou uma nova fonte de receita que não nos custa nenhum esforço para gerir."
+                    "É um dinheiro que simplesmente não existia para nós. A Recupera.ia não só pagou o investimento no primeiro dia, como criou uma nova fonte de receita que não nos custa nenhum esforço para gerir."
                   </blockquote>
                 </div>
 
@@ -1283,9 +1034,7 @@ export default function Page() {
                   <div className="mb-4 flex-grow">
                     <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide mb-2">O RESULTADO:</p>
                     <p className="text-sm text-gray-300 mb-4">
-                      Nossa IA Conversacional recuperou <span className="text-white font-bold">107 clientes</span>,
-                      gerando <span className="text-[#7ef542] font-bold">R$ 19.260,00</span> em faturamento extra e
-                      atingindo uma taxa de conversão que nenhuma outra ferramenta chegou perto.
+                      Nossa IA Conversacional recuperou <span className="text-white font-bold">107 clientes</span>, gerando <span className="text-[#7ef542] font-bold">R$ 19.260,00</span> em faturamento extra e atingindo uma taxa de conversão que nenhuma outra ferramenta chegou perto.
                     </p>
                     <div className="border border-[#7ef542]/50 bg-[#7ef542]/5 rounded-lg p-3 mb-4">
                       <p className="text-[#7ef542] font-bold text-center text-sm">Taxa de Conversão de 60,11%</p>
@@ -1293,8 +1042,7 @@ export default function Page() {
                   </div>
 
                   <blockquote className="text-xs text-gray-500 italic mt-auto">
-                    "Ver 6 em cada 10 pessoas que abandonaram o carrinho voltando para comprar foi inacreditável. A
-                    Recupera.ia não é uma ferramenta de recuperação, é uma máquina de conversão."
+                    "Ver 6 em cada 10 pessoas que abandonaram o carrinho voltando para comprar foi inacreditável. A Recupera.ia não é uma ferramenta de recuperação, é uma máquina de conversão."
                   </blockquote>
                 </div>
 
@@ -1315,10 +1063,7 @@ export default function Page() {
                   <div className="mb-4 flex-grow">
                     <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide mb-2">O RESULTADO:</p>
                     <p className="text-sm text-gray-300 mb-4">
-                      Mesmo com um ticket baixo, nosso fluxo recuperou{" "}
-                      <span className="text-white font-bold">13.745 usuários</span>, injetando{" "}
-                      <span className="text-[#7ef542] font-bold">R$ 68.725,00</span> de receita adicional que antes era
-                      completamente perdida.
+                      Mesmo com um ticket baixo, nosso fluxo recuperou <span className="text-white font-bold">13.745 usuários</span>, injetando <span className="text-[#7ef542] font-bold">R$ 68.725,00</span> de receita adicional que antes era completamente perdida.
                     </p>
                     <div className="border border-[#7ef542]/50 bg-[#7ef542]/5 rounded-lg p-3 mb-4">
                       <p className="text-[#7ef542] font-bold text-center text-sm">+13 mil recuperados em 30 dias</p>
@@ -1326,36 +1071,30 @@ export default function Page() {
                   </div>
 
                   <blockquote className="text-xs text-gray-500 italic mt-auto">
-                    "No nosso volume, cada ponto percentual importa. A Recupera.ia nos entregou quase 10% de conversão
-                    sobre um público que já tínhamos desistido. É lucro puro, na escala que precisamos."
+                    "No nosso volume, cada ponto percentual importa. A Recupera.ia nos entregou quase 10% de conversão sobre um público que já tínhamos desistido. É lucro puro, na escala que precisamos."
                   </blockquote>
                 </div>
               </div>
             </div>
 
-            {/* CTA Final */}
+{/* CTA Final */}
             <div className="mt-12 bg-[#111816] rounded-2xl p-8 border border-[#1a2520]">
               <div className="text-center mb-8">
                 <h3 className="text-xl md:text-3xl font-bold leading-tight">
                   {renderDynamicHeadline(nomeLead, "e se eu dissesse que você também pode ter esse resultado?")}
-                  <br />E o melhor: com <span className="text-[#7ef542]">RISCO ZERO</span> de investir e não ter retorno{" "}
-                  <span className="text-[#7ef542]">
-                    <br />
-                    ASSINADO EM CONTRATO!
-                  </span>
+                  <br />E o melhor: com <span className="text-[#7ef542]">RISCO ZERO</span>{" "} de investir e não ter retorno <span className="text-[#7ef542]"><br />ASSINADO EM CONTRATO!</span>
                 </h3>
               </div>
 
               <div className="mt-8">
                 <a
-                  href="https://wa.me/5519936196347?text=Quero%20recuperar%20meu%20lucro%20perdido"
+                  href="https://app.cal.com/recupera.ia/30min?user=recupera.ia&overlayCalendar=true"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-full bg-[#7ef542] hover:bg-[#6ee032] text-[#0a0f0d] font-bold py-6 px-8 rounded-lg transition-colors text-center block no-underline"
                 >
                   <span className="uppercase md:text-base leading-tight block text-[24px]">
-                    QUERO {formatResultCurrency(resultados.recuperacao10.mensal)} A MAIS NO MEU BOLSO TODOS OS MESES COM
-                    RISCO ZERO
+                    QUERO {formatResultCurrency(resultados.recuperacao10.mensal)} A MAIS NO MEU BOLSO TODOS OS MESES COM RISCO ZERO
                   </span>
                 </a>
               </div>
@@ -1363,524 +1102,6 @@ export default function Page() {
           </div>
         )}
       </div>
-
-      {/* --- ESTRUTURA OCULTA DO PDF (NÃO VISÍVEL NA TELA) --- */}
-      {/* ATENÇÃO: ESTA SEÇÃO USA ESTILOS INLINE PARA GARANTIR COMPATIBILIDADE COM HTML2CANVAS.
-          NÃO SUBSTITUA POR CLASSES TAILWIND QUE USEM OKLCH OU VARIÁVEIS MODERNAS.
-      */}
-      {resultados && (
-        <div ref={reportRef} style={{ position: "absolute", left: "-9999px", top: 0 }}>
-          {/* PÁGINA 1: CAPA E DIAGNÓSTICO INICIAL */}
-          <div
-            style={{
-              width: "794px",
-              height: "1123px",
-              backgroundColor: "#0a0f0d",
-              color: "#ffffff",
-              padding: "48px",
-              position: "relative",
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "space-between",
-              borderBottom: "1px solid #1f2937",
-            }}
-          >
-            <div>
-              <div
-                style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "64px" }}
-              >
-                <img src="/logo-recupera-transparent.png" style={{ height: "64px", width: "auto" }} alt="Logo" />
-                <span
-                  style={{ fontSize: "12px", color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.1em" }}
-                >
-                  Auditoria Confidencial
-                </span>
-              </div>
-
-              <div style={{ marginBottom: "48px" }}>
-                <h1
-                  style={{
-                    fontSize: "48px",
-                    fontWeight: "bold",
-                    marginBottom: "16px",
-                    textTransform: "uppercase",
-                    lineHeight: "1.2",
-                  }}
-                >
-                  Auditoria de Lucro
-                  <br />
-                  <span style={{ color: "#7ef542" }}>Invisível</span>
-                </h1>
-                <p style={{ fontSize: "20px", color: "#9ca3af" }}>
-                  Relatório técnico de recuperação de ativos financeiros.
-                </p>
-              </div>
-
-              <div
-                style={{
-                  border: "1px solid #7ef542",
-                  backgroundColor: "rgba(126, 245, 66, 0.05)",
-                  padding: "32px",
-                  borderRadius: "12px",
-                  marginBottom: "48px",
-                }}
-              >
-                <h3
-                  style={{
-                    fontSize: "14px",
-                    color: "#7ef542",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.05em",
-                    fontWeight: "bold",
-                    marginBottom: "24px",
-                  }}
-                >
-                  Dados da Operação
-                </h3>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "32px" }}>
-                  <div>
-                    <p style={{ fontSize: "12px", color: "#6b7280", marginBottom: "4px" }}>Preparado para:</p>
-                    <p style={{ fontSize: "20px", fontWeight: "bold" }}>{nomeLead || "Empresário Digital"}</p>
-                  </div>
-                  <div>
-                    <p style={{ fontSize: "12px", color: "#6b7280", marginBottom: "4px" }}>Data da Auditoria:</p>
-                    <p style={{ fontSize: "20px", fontWeight: "bold" }}>{new Date().toLocaleDateString("pt-BR")}</p>
-                  </div>
-                  <div>
-                    <p style={{ fontSize: "12px", color: "#6b7280", marginBottom: "4px" }}>Produto/Operação:</p>
-                    <p style={{ fontSize: "20px", fontWeight: "bold" }}>{nomeProduto || "Sua Operação Digital"}</p>
-                  </div>
-                  <div>
-                    <p style={{ fontSize: "12px", color: "#6b7280", marginBottom: "4px" }}>Nicho de Atuação:</p>
-                    <p style={{ fontSize: "20px", fontWeight: "bold" }}>{nicho || "Infoprodutos e Vendas Online"}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* STATUS DO CHECKOUT NO PDF */}
-              <div style={{ marginBottom: "32px" }}>
-                <h3 style={{ fontSize: "24px", fontWeight: "bold", marginBottom: "16px" }}>
-                  1. Diagnóstico de Saúde do Checkout
-                </h3>
-                <div
-                  style={{
-                    backgroundColor: "#111816",
-                    padding: "24px",
-                    borderRadius: "12px",
-                    border: "1px solid #1f2937",
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      marginBottom: "16px",
-                    }}
-                  >
-                    <div
-                      style={{
-                        fontSize: "14px",
-                        fontWeight: "bold",
-                        padding: "4px 12px",
-                        borderRadius: "9999px",
-                        textTransform: "uppercase",
-                        backgroundColor:
-                          resultados.statusSaude === "Critico"
-                            ? "#ef4444"
-                            : resultados.statusSaude === "Padrao"
-                              ? "#eab308"
-                              : "#7ef542",
-                        color: "#0a0f0d",
-                      }}
-                    >
-                      Status:{" "}
-                      {resultados.statusSaude === "Critico"
-                        ? "Crítico"
-                        : resultados.statusSaude === "Padrao"
-                          ? "Padrão"
-                          : "Eficiente"}
-                    </div>
-                    <div style={{ textAlign: "right" }}>
-                      <span
-                        style={{
-                          fontSize: "36px",
-                          fontWeight: "bold",
-                          color:
-                            resultados.statusSaude === "Critico"
-                              ? "#ef4444"
-                              : resultados.statusSaude === "Padrao"
-                                ? "#eab308"
-                                : "#7ef542",
-                        }}
-                      >
-                        {resultados.taxaConversaoAtual.toFixed(2)}%
-                      </span>
-                      <span style={{ fontSize: "12px", color: "#9ca3af", display: "block" }}>
-                        Taxa de Conversão Atual
-                      </span>
-                    </div>
-                  </div>
-                  {/* Insight Dinâmico */}
-                  <div
-                    style={{
-                      marginTop: "16px",
-                      padding: "16px",
-                      backgroundColor: "rgba(0, 0, 0, 0.4)",
-                      borderRadius: "8px",
-                      border: "1px solid #374151",
-                    }}
-                  >
-                    <h4
-                      style={{
-                        fontSize: "14px",
-                        fontWeight: "bold",
-                        marginBottom: "8px",
-                        color:
-                          resultados.statusSaude === "Critico"
-                            ? "#ef4444"
-                            : resultados.statusSaude === "Padrao"
-                              ? "#eab308"
-                              : "#7ef542",
-                      }}
-                    >
-                      {getDiagnosisTexts(resultados.taxaConversaoAtual).title}
-                    </h4>
-                    <p style={{ fontSize: "12px", color: "#d1d5db", marginBottom: "8px" }}>
-                      {getDiagnosisTexts(resultados.taxaConversaoAtual).tech}
-                    </p>
-                    <p style={{ fontSize: "12px", color: "#9ca3af", fontStyle: "italic" }}>
-                      {getDiagnosisTexts(resultados.taxaConversaoAtual).verdict}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div style={{ textAlign: "center", borderTop: "1px solid #1f2937", paddingTop: "24px" }}>
-              <p style={{ fontSize: "10px", color: "#4b5563" }}>Recupera.ia - Tecnologia de Recuperação Ativa © 2025</p>
-            </div>
-          </div>
-
-          {/* PÁGINA 2: O VILÃO FINANCEIRO */}
-          <div
-            style={{
-              width: "794px",
-              height: "1123px",
-              backgroundColor: "#0a0f0d",
-              color: "#ffffff",
-              padding: "48px",
-              position: "relative",
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "space-between",
-              borderBottom: "1px solid #1f2937",
-            }}
-          >
-            <div>
-              <h3 style={{ fontSize: "24px", fontWeight: "bold", marginBottom: "32px" }}>
-                2. O Impacto Financeiro Real
-              </h3>
-
-              {/* BIG NUMBER BOX */}
-              <div
-                style={{
-                  backgroundColor: "#7ef542",
-                  color: "#0a0f0d",
-                  padding: "40px",
-                  borderRadius: "16px",
-                  marginBottom: "32px",
-                  boxShadow: "0 0 40px rgba(126,245,66,0.2)",
-                }}
-              >
-                <p
-                  style={{
-                    fontSize: "14px",
-                    fontWeight: "bold",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.1em",
-                    marginBottom: "8px",
-                    opacity: 0.8,
-                  }}
-                >
-                  Possibilidade de Faturamento Perdida (Mensal)
-                </p>
-                <h2 style={{ fontSize: "72px", fontWeight: "bold", letterSpacing: "-0.05em" }}>
-                  {formatResultCurrency(resultados.oportunidadePerdida)}
-                </h2>
-                <p style={{ marginTop: "16px", fontWeight: "500", opacity: 0.9 }}>
-                  Este é o valor exato que sua operação gerou de interesse mas falhou em capturar.
-                </p>
-              </div>
-
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px", marginBottom: "32px" }}>
-                <div
-                  style={{
-                    backgroundColor: "#111816",
-                    padding: "24px",
-                    borderRadius: "12px",
-                    border: "1px solid #1f2937",
-                  }}
-                >
-                  <p style={{ color: "#9ca3af", fontSize: "12px", textTransform: "uppercase", marginBottom: "8px" }}>
-                    Volume de Leads Perdidos
-                  </p>
-                  <p style={{ fontSize: "30px", fontWeight: "bold", color: "#ffffff", marginBottom: "8px" }}>
-                    {formatNumber(Math.round(resultados.oportunidadePerdida / resultados.ticketMedio))}{" "}
-                    <span style={{ fontSize: "14px", color: "#7ef542" }}>Leads</span>
-                  </p>
-                  <p style={{ fontSize: "10px", color: "#6b7280" }}>
-                    Pessoas que chegaram ao checkout e não compraram este mês.
-                  </p>
-                </div>
-                <div
-                  style={{
-                    backgroundColor: "#111816",
-                    padding: "24px",
-                    borderRadius: "12px",
-                    border: "1px solid #1f2937",
-                  }}
-                >
-                  <p style={{ color: "#9ca3af", fontSize: "12px", textTransform: "uppercase", marginBottom: "8px" }}>
-                    Ticket Médio Analisado
-                  </p>
-                  <p style={{ fontSize: "30px", fontWeight: "bold", color: "#ffffff", marginBottom: "8px" }}>
-                    {formatResultCurrency(resultados.ticketMedio)}
-                  </p>
-                  <p style={{ fontSize: "10px", color: "#6b7280" }}>Base de cálculo para projeção de perdas.</p>
-                </div>
-              </div>
-
-              {/* Desperdício de Tráfego (Condicional) */}
-              {resultados.desperdicioTrafego > 0 && (
-                <div
-                  style={{
-                    backgroundColor: "rgba(127, 29, 29, 0.1)",
-                    border: "1px solid rgba(239, 68, 68, 0.2)",
-                    padding: "24px",
-                    borderRadius: "12px",
-                    marginBottom: "32px",
-                  }}
-                >
-                  <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "8px" }}>
-                    <Target style={{ width: "20px", height: "20px", color: "#ef4444" }} />
-                    <h4 style={{ color: "#ef4444", fontWeight: "bold" }}>Alerta de Desperdício de Tráfego</h4>
-                  </div>
-                  <p style={{ fontSize: "14px", color: "#d1d5db", marginBottom: "8px" }}>
-                    Com sua taxa atual, você está pagando para atrair pessoas que seu sistema expulsa.
-                  </p>
-                  <p style={{ fontSize: "20px", fontWeight: "bold", color: "#ffffff" }}>
-                    {formatResultCurrency(resultados.desperdicioTrafego)}{" "}
-                    <span style={{ fontSize: "14px", fontWeight: "normal", color: "#9ca3af" }}>
-                      jogados fora em anúncios/mês
-                    </span>
-                  </p>
-                </div>
-              )}
-
-              {/* Projeção Anual (LTV) */}
-              <h3 style={{ fontSize: "20px", fontWeight: "bold", marginBottom: "16px", marginTop: "32px" }}>
-                3. O Custo da Inação (12 Meses)
-              </h3>
-              <div
-                style={{
-                  background: "linear-gradient(to right, #111816, #000000)",
-                  padding: "32px",
-                  borderRadius: "12px",
-                  borderLeft: "4px solid #7ef542",
-                }}
-              >
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
-                  <div>
-                    <p style={{ color: "#9ca3af", fontSize: "14px", marginBottom: "4px" }}>
-                      Se nada for feito hoje, em 1 ano você terá perdido:
-                    </p>
-                    <h2 style={{ fontSize: "48px", fontWeight: "bold", color: "#ffffff" }}>
-                      {formatResultCurrency(resultados.projecao.ano1)}
-                    </h2>
-                  </div>
-                  <div style={{ textAlign: "right" }}>
-                    <p style={{ fontSize: "12px", color: "#7ef542", fontWeight: "bold", textTransform: "uppercase" }}>
-                      Projeção Acumulada
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div style={{ textAlign: "center", borderTop: "1px solid #1f2937", paddingTop: "24px" }}>
-              <p style={{ fontSize: "10px", color: "#4b5563" }}>Página 2 de 3 - Auditoria Financeira</p>
-            </div>
-          </div>
-
-          {/* PÁGINA 3: SOLUÇÃO E CENÁRIOS */}
-          <div
-            style={{
-              width: "794px",
-              height: "1123px",
-              backgroundColor: "#0a0f0d",
-              color: "#ffffff",
-              padding: "48px",
-              position: "relative",
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "space-between",
-            }}
-          >
-            <div>
-              <h3 style={{ fontSize: "24px", fontWeight: "bold", marginBottom: "32px" }}>
-                4. Potencial de Recuperação Imediata
-              </h3>
-              <p style={{ color: "#9ca3af", marginBottom: "32px" }}>
-                Aplicando a tecnologia Recupera.ia, projetamos os seguintes cenários de injeção de caixa no seu negócio,
-                baseados em nossa média histórica de performance.
-              </p>
-
-              <div style={{ display: "flex", flexDirection: "column", gap: "16px", marginBottom: "48px" }}>
-                {/* Cenário 10% */}
-                <div
-                  style={{
-                    backgroundColor: "#111816",
-                    padding: "24px",
-                    borderRadius: "12px",
-                    border: "1px solid #1f2937",
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                  }}
-                >
-                  <div>
-                    <p style={{ fontSize: "14px", color: "#9ca3af" }}>Cenário Conservador (10% de Recuperação)</p>
-                    <p style={{ fontSize: "24px", fontWeight: "bold", color: "#ffffff" }}>
-                      +{formatResultCurrency(resultados.recuperacao10.mensal)}{" "}
-                      <span style={{ fontSize: "14px", fontWeight: "normal", color: "#6b7280" }}>/mês</span>
-                    </p>
-                  </div>
-                  <div style={{ height: "32px", width: "1px", backgroundColor: "#374151" }}></div>
-                  <div style={{ textAlign: "right" }}>
-                    <p style={{ fontSize: "12px", color: "#6b7280" }}>Anual (LTV)</p>
-                    <p style={{ fontSize: "20px", fontWeight: "bold", color: "#7ef542" }}>
-                      {formatResultCurrency(resultados.recuperacao10.anual)}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Cenário 20% */}
-                <div
-                  style={{
-                    backgroundColor: "#111816",
-                    padding: "24px",
-                    borderRadius: "12px",
-                    border: "1px solid rgba(126, 245, 66, 0.3)",
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    position: "relative",
-                    overflow: "hidden",
-                  }}
-                >
-                  <div
-                    style={{
-                      position: "absolute",
-                      left: 0,
-                      top: 0,
-                      width: "4px",
-                      height: "100%",
-                      backgroundColor: "#7ef542",
-                    }}
-                  ></div>
-                  <div>
-                    <p style={{ fontSize: "14px", color: "#ffffff", fontWeight: "bold" }}>
-                      Cenário Meta (20% de Recuperação)
-                    </p>
-                    <p style={{ fontSize: "30px", fontWeight: "bold", color: "#ffffff" }}>
-                      +{formatResultCurrency(resultados.recuperacao20.mensal)}{" "}
-                      <span style={{ fontSize: "14px", fontWeight: "normal", color: "#6b7280" }}>/mês</span>
-                    </p>
-                  </div>
-                  <div style={{ height: "32px", width: "1px", backgroundColor: "#374151" }}></div>
-                  <div style={{ textAlign: "right" }}>
-                    <p style={{ fontSize: "12px", color: "#6b7280" }}>Anual (LTV)</p>
-                    <p style={{ fontSize: "20px", fontWeight: "bold", color: "#7ef542" }}>
-                      {formatResultCurrency(resultados.recuperacao20.anual)}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Cenário 34% */}
-                <div
-                  style={{
-                    background: "linear-gradient(to right, #111816, #0f1814)",
-                    padding: "24px",
-                    borderRadius: "12px",
-                    border: "1px solid #7ef542",
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                  }}
-                >
-                  <div>
-                    <p style={{ fontSize: "14px", color: "#7ef542", fontWeight: "bold" }}>
-                      Cenário Alta Performance (34% de Recuperação)
-                    </p>
-                    <p style={{ fontSize: "30px", fontWeight: "bold", color: "#ffffff" }}>
-                      +{formatResultCurrency(resultados.recuperacao34.mensal)}{" "}
-                      <span style={{ fontSize: "14px", fontWeight: "normal", color: "#6b7280" }}>/mês</span>
-                    </p>
-                  </div>
-                  <div style={{ height: "32px", width: "1px", backgroundColor: "#374151" }}></div>
-                  <div style={{ textAlign: "right" }}>
-                    <p style={{ fontSize: "12px", color: "#6b7280" }}>Anual (LTV)</p>
-                    <p style={{ fontSize: "20px", fontWeight: "bold", color: "#7ef542" }}>
-                      {formatResultCurrency(resultados.recuperacao34.anual)}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div
-                style={{
-                  backgroundColor: "#7ef542",
-                  color: "#0a0f0d",
-                  padding: "32px",
-                  borderRadius: "12px",
-                  textAlign: "center",
-                }}
-              >
-                <h3 style={{ fontSize: "24px", fontWeight: "bold", textTransform: "uppercase", marginBottom: "8px" }}>
-                  Próximo Passo: Implementação
-                </h3>
-                <p style={{ fontWeight: "500", marginBottom: "24px" }}>
-                  Sua operação tem um lucro invisível de {formatResultCurrency(resultados.oportunidadePerdida)}{" "}
-                  esperando para ser coletado.
-                </p>
-                <div
-                  style={{
-                    backgroundColor: "#0a0f0d",
-                    color: "#ffffff",
-                    padding: "16px 32px",
-                    borderRadius: "8px",
-                    display: "inline-block",
-                    fontWeight: "bold",
-                    fontSize: "18px",
-                    border: "1px solid #7ef542",
-                  }}
-                >
-                  GARANTIA DE RISCO ZERO EM CONTRATO
-                </div>
-                <p style={{ fontSize: "12px", marginTop: "16px", opacity: 0.8 }}>
-                  Não cobramos setup inicial. O custo é baseado no sucesso da recuperação.
-                </p>
-              </div>
-            </div>
-
-            <div style={{ textAlign: "center", borderTop: "1px solid #1f2937", paddingTop: "24px" }}>
-              <p style={{ fontSize: "14px", fontWeight: "bold", color: "#ffffff", marginBottom: "4px" }}>Recupera.ia</p>
-              <p style={{ fontSize: "10px", color: "#4b5563" }}>
-                Documento gerado automaticamente. Validade da análise: 7 dias.
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
