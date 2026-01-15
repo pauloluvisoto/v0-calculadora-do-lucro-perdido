@@ -346,182 +346,40 @@ export default function Page() {
     }, 100)
   }
 
-  // --- GERADOR DE PDF (AUDITORIA) ---
+  // --- GERADOR DE PDF (AUDITORIA TÉCNICA) ---
   const generatePDF = async () => {
-    if (!resultados) return
+    if (!reportRef.current || !resultados) return
     setIsGeneratingPdf(true)
 
     try {
-      // Create a new window with completely isolated HTML - no CSS inheritance
-      const printWindow = window.open("", "_blank", "width=800,height=600")
+      const pdf = new jsPDF('p', 'mm', 'a4')
+      const pages = reportRef.current.children
 
-      if (!printWindow) {
-        alert("Por favor, permita popups para gerar o PDF.")
-        setIsGeneratingPdf(false)
-        return
+      for (let i = 0; i < pages.length; i++) {
+        const page = pages[i] as HTMLElement
+        // Renderização forçada sem Tailwind classes para evitar erros de cor (oklch)
+        const canvas = await html2canvas(page, {
+          scale: 2,
+          backgroundColor: "#0a0f0d", // Garante fundo preto exato
+          useCORS: true,
+          logging: false
+        })
+        
+        const imgData = canvas.toDataURL('image/png')
+        // Adiciona página se não for a primeira
+        if (i > 0) pdf.addPage()
+        // Adiciona imagem cobrindo a folha A4 inteira (210x297mm)
+        pdf.addImage(imgData, 'PNG', 0, 0, 210, 297)
       }
 
-      const htmlContent = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="UTF-8">
-          <title>Relatório de Lucro Perdido - ${nomeLead}</title>
-          <style>
-            * { margin: 0; padding: 0; box-sizing: border-box; }
-            body {
-              font-family: Arial, Helvetica, sans-serif;
-              background: #0a0f0d;
-              color: #ffffff;
-              padding: 40px;
-              line-height: 1.6;
-            }
-            .container { max-width: 700px; margin: 0 auto; }
-            h1 {
-              color: #7ef542;
-              font-size: 28px;
-              margin-bottom: 30px;
-              text-align: center;
-              border-bottom: 2px solid #7ef542;
-              padding-bottom: 15px;
-            }
-            .section {
-              background: #141b17;
-              border: 1px solid #3a5a40;
-              border-radius: 8px;
-              padding: 20px;
-              margin-bottom: 20px;
-            }
-            .section h2 {
-              color: #7ef542;
-              font-size: 18px;
-              margin-bottom: 15px;
-              border-bottom: 1px solid #3a5a40;
-              padding-bottom: 8px;
-            }
-            .section p {
-              margin: 8px 0;
-              font-size: 14px;
-            }
-            .section strong { color: #7ef542; }
-            .highlight {
-              color: #7ef542;
-              font-size: 28px;
-              font-weight: bold;
-              text-align: center;
-              padding: 15px 0;
-            }
-            .highlight-subtitle {
-              text-align: center;
-              color: #cccccc;
-              font-size: 14px;
-              margin-top: -10px;
-            }
-            .scenario {
-              background: #1a2520;
-              border-radius: 6px;
-              padding: 15px;
-              margin-bottom: 12px;
-            }
-            .scenario:last-child { margin-bottom: 0; }
-            .scenario h3 {
-              color: #7ef542;
-              font-size: 16px;
-              margin-bottom: 10px;
-            }
-            .scenario p { margin: 5px 0; font-size: 13px; }
-            .footer {
-              text-align: center;
-              padding-top: 20px;
-              margin-top: 20px;
-              border-top: 1px solid #3a5a40;
-            }
-            .footer p { font-size: 12px; color: #888888; }
-            .footer .brand { color: #7ef542; font-weight: bold; }
-            @media print {
-              body { background: #0a0f0d !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-              .section { break-inside: avoid; }
-            }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <h1>Relatório de Análise de Lucro Perdido</h1>
-            
-            <div class="section">
-              <h2>Informações do Lead</h2>
-              <p><strong>Nome:</strong> ${nomeLead}</p>
-              <p><strong>WhatsApp:</strong> ${whatsapp}</p>
-              <p><strong>Nicho:</strong> ${nicho || "Não informado"}</p>
-              <p><strong>Produto:</strong> ${nomeProduto || "Não informado"}</p>
-            </div>
-
-            <div class="section">
-              <h2>Dados Atuais</h2>
-              <p><strong>Faturamento:</strong> R$ ${faturamento}</p>
-              <p><strong>Ticket Médio:</strong> R$ ${ticketMedio}</p>
-              <p><strong>Vendas Realizadas:</strong> ${resultados.vendas.toLocaleString("pt-BR")}</p>
-              <p><strong>Carrinhos Abandonados:</strong> ${resultados.carrinhosAbandonados.toLocaleString("pt-BR")}</p>
-              <p><strong>Taxa de Conversão:</strong> ${resultados.taxaConversaoAtual.toFixed(1)}%</p>
-              <p><strong>Status:</strong> ${resultados.statusSaude}</p>
-            </div>
-
-            <div class="section">
-              <h2>Oportunidade de Recuperação</h2>
-              <p class="highlight">
-                R$ ${resultados.lucroTotalPerdido.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </p>
-              <p class="highlight-subtitle">em vendas perdidas por mês</p>
-            </div>
-
-            <div class="section">
-              <h2>Cenários de Recuperação</h2>
-              
-              <div class="scenario">
-                <h3>Cenário Conservador (10% de recuperação)</h3>
-                <p><strong>Recuperação Mensal:</strong> R$ ${resultados.cenario1.faturamentoExtra.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-                <p><strong>Recuperação Anual:</strong> R$ ${(resultados.cenario1.faturamentoExtra * 12).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-              </div>
-
-              <div class="scenario">
-                <h3>Cenário Moderado (20% de recuperação)</h3>
-                <p><strong>Recuperação Mensal:</strong> R$ ${resultados.cenario2.faturamentoExtra.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-                <p><strong>Recuperação Anual:</strong> R$ ${(resultados.cenario2.faturamentoExtra * 12).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-              </div>
-
-              <div class="scenario">
-                <h3>Cenário Otimista (34% de recuperação)</h3>
-                <p><strong>Recuperação Mensal:</strong> R$ ${resultados.cenario3.faturamentoExtra.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-                <p><strong>Recuperação Anual:</strong> R$ ${(resultados.cenario3.faturamentoExtra * 12).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-              </div>
-            </div>
-
-            <div class="section">
-              <h2>Projeção de Perdas</h2>
-              <p><strong>Em 3 meses:</strong> R$ ${resultados.projecao.mes3.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-              <p><strong>Em 6 meses:</strong> R$ ${resultados.projecao.mes6.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-              <p><strong>Em 1 ano:</strong> R$ ${resultados.projecao.ano1.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-            </div>
-
-            <div class="footer">
-              <p class="brand">Calculadora de Lucro Perdido - Recupera.ia</p>
-              <p>Relatório gerado em ${new Date().toLocaleDateString("pt-BR")} às ${new Date().toLocaleTimeString("pt-BR")}</p>
-            </div>
-          </div>
-        </body>
-        </html>
-      `
-
-      printWindow.document.write(htmlContent)
-      printWindow.document.close()
-
-      // Wait for content to load then trigger print
-      printWindow.onload = () => {
-        setTimeout(() => {
-          printWindow.print()
-          setIsGeneratingPdf(false)
-        }, 250)
-      }
+      pdf.save(`Auditoria_Tecnica_RecuperaIA_${nomeLead.replace(/\s+/g, '_')}.pdf`)
+    } catch (error) {
+      console.error("Erro ao gerar PDF", error)
+      alert("Ocorreu um erro ao gerar seu PDF. Tente novamente.")
+    } finally {
+      setIsGeneratingPdf(false)
+    }
+  }
 
       // Fallback if onload doesn't fire
       setTimeout(() => {
