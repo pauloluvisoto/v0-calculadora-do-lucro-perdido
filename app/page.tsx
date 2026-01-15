@@ -18,7 +18,9 @@ import {
   HelpCircle,
   ArrowUpRight,
   ArrowDownRight,
-  AlertOctagon
+  AlertOctagon,
+  Wallet,
+  Info
 } from "lucide-react"
 
 export default function Page() {
@@ -34,19 +36,16 @@ export default function Page() {
   const [modoDetalhado, setModoDetalhado] = useState(false)
   const [vendasRealizadas, setVendasRealizadas] = useState("")
 
-  // Estados para Features Avançadas (2025)
+  // Estados para Features Avançadas
   const [taxaConversao, setTaxaConversao] = useState("")
   const [investimentoTrafego, setInvestimentoTrafego] = useState("")
   
   // Novos Estados para Upsell/Downsell
   const [temUpsell, setTemUpsell] = useState<boolean | null>(null)
-  const [valorUpsell, setValorUpsell] = useState("") // Novo estado para valor
+  const [valorUpsell, setValorUpsell] = useState("") 
   
   const [temDownsell, setTemDownsell] = useState<boolean | null>(null)
-  const [valorDownsell, setValorDownsell] = useState("") // Novo estado para valor
-  
-  // Estado legado mantido para compatibilidade interna
-  const [frequenciaCompra, setFrequenciaCompra] = useState("1")
+  const [valorDownsell, setValorDownsell] = useState("")
   
   const [campoAutoCalculado, setCampoAutoCalculado] = useState<"faturamento" | "ticket" | "vendas" | null>(null)
 
@@ -55,13 +54,20 @@ export default function Page() {
     faturamento: number
     ticketMedio: number
     vendas: number
-    oportunidadePerdida: number
+    
+    // Breakdown das perdas
+    perdaPrincipal: number
+    perdaUpsellPotencial: number
+    perdaDownsellPotencial: number
+    
+    oportunidadePerdidaTotal: number // Soma APENAS do que está ativo
+    
     taxaConversaoAtual: number
     statusSaude: "Critico" | "Padrao" | "Excelente"
     desperdicioTrafego: number
     ineficienciaTrafego: number
     totalVisitasEstimadas: number
-    perdaLTV: number
+    perdaLTV: number 
     projecao: {
       mes3: number
       mes6: number
@@ -71,6 +77,10 @@ export default function Page() {
     recuperacao20: { mensal: number; anual: number }
     recuperacao34: { mensal: number; anual: number }
     carrinhosAbandonados: number
+    
+    // Dados para os cards
+    cenarioUpsell: "sim" | "nao"
+    cenarioDownsell: "sim" | "nao"
   } | null>(null)
 
   const resultadosRef = useRef<HTMLDivElement>(null)
@@ -79,7 +89,7 @@ export default function Page() {
     setResultados(null)
   }, [modoDetalhado])
 
-  // --- FUNÇÕES AUXILIARES E VALIDAÇÃO ---
+  // --- FUNÇÕES AUXILIARES ---
 
   const badWords = ["teste", "test", "admin", "merda", "bosta", "caralho", "puta", "viado", "cu", "buceta", "pinto", "burro", "idiota", "desgraça", "foda", "corno", "pau", "chupa"]
 
@@ -190,11 +200,6 @@ export default function Page() {
       return
     }
 
-    if (containsProfanity(nomeLead) || containsProfanity(nomeProduto) || containsProfanity(tipoProduto) || containsProfanity(nicho)) {
-      alert("Por favor, utilize termos adequados nos campos de texto.")
-      return
-    }
-
     const fat = parseCurrency(faturamento)
     const ticket = parseCurrency(ticketMedio)
 
@@ -208,28 +213,7 @@ export default function Page() {
     let taxaAtual = 0
     const investimentoAd = parseCurrency(investimentoTrafego) || 0
 
-    // Lógica LTV Refinada com Valores
-    let ticketLTV = ticket
-    
-    // Se tem Upsell
-    if (temUpsell) {
-        const valUpsell = parseCurrency(valorUpsell)
-        // Se digitou valor, assume 20% de conversão no upsell. Se não digitou, assume 20% do ticket principal.
-        const acrescimoUpsell = valUpsell > 0 ? (valUpsell * 0.20) : (ticket * 0.20)
-        ticketLTV += acrescimoUpsell
-    }
-
-    // Se tem Downsell
-    if (temDownsell) {
-        const valDownsell = parseCurrency(valorDownsell)
-        // Se digitou valor, assume 10% de conversão no downsell. Se não digitou, assume 10% do ticket principal.
-        const acrescimoDownsell = valDownsell > 0 ? (valDownsell * 0.10) : (ticket * 0.10)
-        ticketLTV += acrescimoDownsell
-    }
-
-    // Fator multiplicador para manter a lógica proporcional do código original
-    const multiplicadorLTV = ticketLTV / ticket
-
+    // 1. Definição de Cenário e Dados Base
     let visitasEstimadas = 0
 
     if (modoDetalhado) {
@@ -249,55 +233,91 @@ export default function Page() {
       visitasEstimadas = Math.round(totalVisitasCheckout)
       taxaAtual = taxaInput
     } else {
+      // Modo Simplificado: Estimativas de Mercado
       vendas = Math.round(fat / ticket)
-      carrinhosAband = vendas * 3
-      taxaAtual = 25
+      carrinhosAband = vendas * 3 
+      taxaAtual = 25 
       visitasEstimadas = vendas * 4
     }
 
-    const oportunidadePerdida = carrinhosAband * ticket
+    // 2. Cálculo de Perda Principal (Sempre existe)
+    const perdaPrincipal = carrinhosAband * ticket
+
+    // 3. Cálculo de Perda de Ecossistema (Upsell/Downsell)
+    let valUpsell = 0
+    let valDownsell = 0
+    
+    if (valorUpsell) valUpsell = parseCurrency(valorUpsell)
+    if (valorDownsell) valDownsell = parseCurrency(valorDownsell)
+
+    // Base de cálculo para Potencial:
+    // Se tem valor, usa o valor. Se não tem, usa estimativa (150% do ticket para up, 30% para down).
+    const upsellBase = (valUpsell > 0) ? valUpsell : (ticket * 1.5) 
+    const downsellBase = (valDownsell > 0) ? valDownsell : (ticket * 0.3)
+
+    // CÁLCULO DOS POTENCIAIS (Para exibição no GRID)
+    // Upsell: 20% de conversão sobre os recuperados
+    const perdaUpsellPotencial = carrinhosAband * 0.20 * upsellBase
+    
+    // Downsell: 10% de conversão sobre os perdidos
+    const perdaDownsellPotencial = carrinhosAband * 0.10 * downsellBase
+
+    // SOMA REAL PARA O TOTAL (Só soma se tiver marcado SIM)
+    let oportunidadePerdidaTotal = perdaPrincipal
+    if (temUpsell) oportunidadePerdidaTotal += perdaUpsellPotencial
+    if (temDownsell) oportunidadePerdidaTotal += perdaDownsellPotencial
+
+    // 4. Métricas de Eficiência
     let desperdicio = 0
     let ineficiencia = 0
 
     if (investimentoAd > 0) {
-      const benchmarkIdeal = 50
+      const benchmarkIdeal = 50 
       if (taxaAtual < benchmarkIdeal) {
         ineficiencia = ((benchmarkIdeal - taxaAtual) / benchmarkIdeal) * 100
         desperdicio = investimentoAd * (ineficiencia / 100)
       }
     }
 
-    // Cálculo final do LTV usando o ticket composto
-    const perdaRealLTV = (oportunidadePerdida * 12) * multiplicadorLTV
+    const perdaLTV = oportunidadePerdidaTotal * 12
 
     let status: "Critico" | "Padrao" | "Excelente" = "Padrao"
     if (taxaAtual < 30) status = "Critico"
     else if (taxaAtual > 60) status = "Excelente"
 
-    const recuperacao10 = oportunidadePerdida * 0.1
-    const recuperacao20 = oportunidadePerdida * 0.2
-    const recuperacao34 = oportunidadePerdida * 0.34
+    const recuperacao10 = oportunidadePerdidaTotal * 0.1
+    const recuperacao20 = oportunidadePerdidaTotal * 0.2
+    const recuperacao34 = oportunidadePerdidaTotal * 0.34
 
     setResultados({
       faturamento: fat,
       ticketMedio: ticket,
       vendas: vendas,
-      oportunidadePerdida: oportunidadePerdida,
+      perdaPrincipal: perdaPrincipal,
+      
+      perdaUpsellPotencial: perdaUpsellPotencial, 
+      perdaDownsellPotencial: perdaDownsellPotencial,
+
+      oportunidadePerdidaTotal: oportunidadePerdidaTotal, 
+      
       taxaConversaoAtual: taxaAtual,
       statusSaude: status,
       desperdicioTrafego: desperdicio,
       ineficienciaTrafego: ineficiencia,
       totalVisitasEstimadas: visitasEstimadas,
-      perdaLTV: perdaRealLTV,
+      perdaLTV: perdaLTV,
       projecao: {
-        mes3: oportunidadePerdida * 3,
-        mes6: oportunidadePerdida * 6,
-        ano1: perdaRealLTV,
+        mes3: oportunidadePerdidaTotal * 3,
+        mes6: oportunidadePerdidaTotal * 6,
+        ano1: perdaLTV,
       },
       recuperacao10: { mensal: recuperacao10, anual: recuperacao10 * 12 },
       recuperacao20: { mensal: recuperacao20, anual: recuperacao20 * 12 },
       recuperacao34: { mensal: recuperacao34, anual: recuperacao34 * 12 },
       carrinhosAbandonados: carrinhosAband,
+      
+      cenarioUpsell: temUpsell ? "sim" : "nao",
+      cenarioDownsell: temDownsell ? "sim" : "nao",
     })
 
     setTimeout(() => {
@@ -580,9 +600,16 @@ export default function Page() {
                     <span className="text-[#7ef542] font-semibold">3 abandonos para cada 1 venda</span>, garantindo um diagnóstico pé no chão.
                   </li>
                 </ul>
+
+                <div className="bg-yellow-500/10 p-4 rounded-lg border border-yellow-500/20 mt-4">
+                   <p className="text-xs text-yellow-400 font-semibold mb-2">Sobre o Ecossistema (Upsell/Downsell):</p>
+                   <p className="text-xs text-gray-400">
+                      Adicionalmente, o cálculo projeta um cenário onde 20% das vendas recuperadas aceitariam um Upsell e 10% dos leads perdidos seriam convertidos em um Downsell. Se você não tem essas ofertas ativas, este valor representa a receita que você está escolhendo não gerar.
+                   </p>
+                </div>
               </div>
 
-              <div className="bg-black/30 p-4 rounded-lg border border-yellow-500/20 mt-2">
+              <div className="bg-black/30 p-4 rounded-lg border border-yellow-500/20 mt-6">
                 <p className="text-xs font-bold text-white mb-2">Parâmetros de Saúde do Checkout (Benchmark 2025):</p>
                 <ul className="space-y-1 text-[11px] text-gray-400 list-none">
                   <li className="flex items-center gap-2">
@@ -603,7 +630,7 @@ export default function Page() {
                 </ul>
               </div>
 
-              <div>
+              <div className="mt-6">
                 <h5 className="text-white font-semibold mb-2">3. Observação Estratégica</h5>
                 <p className="text-gray-400 text-xs">
                   Caso os números apresentados sejam superiores aos da sua operação atual, isso é um{" "}
@@ -618,15 +645,23 @@ export default function Page() {
               <div className="flex flex-col md:flex-row items-center md:items-start gap-3 mb-4">
                 <AlertTriangle className="w-5 h-5 text-yellow-500 flex-shrink-0 mt-1" />
                 <h4 className="text-lg font-bold text-yellow-500">
-                  Atenção: Diagnóstico de Precisão Baseado 100% nos seus números reais
+                  Atenção: Diagnóstico de Precisão Baseado em Dados Reais
                 </h4>
               </div>
               <div className="space-y-6 text-sm text-gray-300">
                 <p className="text-gray-400 text-xs">
-                  Abaixo, apresentamos a <strong>realidade matemática da sua operação.</strong> Cruzamos seu faturamento e taxa de conversão para revelar o gargalo exato do seu funil.
+                  Ao informar sua <strong>taxa de conversão real</strong>, realizamos uma engenharia reversa do tráfego
+                  no seu checkout para determinar exatamente quantas pessoas iniciaram a compra e desistiram.
                 </p>
 
-                <div className="bg-black/30 p-4 rounded-lg border border-yellow-500/20 mt-2">
+                <div className="bg-[#7ef542]/5 p-4 rounded-lg border border-[#7ef542]/20 mt-4">
+                   <p className="text-xs text-[#7ef542] font-semibold mb-2">Análise de Ecossistema:</p>
+                   <p className="text-xs text-gray-300">
+                      Cruzamos os dados de checkout com os valores de Upsell e Downsell que você informou (ou estimativas de mercado caso ausentes) para calcular não apenas a venda perdida, mas o LTV (Lifetime Value) desperdiçado por cliente não recuperado.
+                   </p>
+                </div>
+
+                <div className="bg-black/30 p-4 rounded-lg border border-yellow-500/20 mt-6">
                   <p className="text-xs font-bold text-white mb-2">Parâmetros de Saúde do Checkout (Benchmark 2025):</p>
                   <ul className="space-y-1 text-[11px] text-gray-400 list-none">
                     <li className="flex items-center gap-2">
@@ -644,10 +679,10 @@ export default function Page() {
                   </ul>
                 </div>
 
-                <div>
+                <div className="mt-6">
                   <h5 className="text-white font-semibold mb-2">2. Identificação de Gargalos</h5>
                   <p className="text-gray-400 text-xs">
-                    Se sua taxa está abaixo de 60%, você está pagando caro para atrair leads apenas para vê-los ir embora sem comprar no último segundo
+                    Se sua taxa está abaixo de 60%, você está pagando caro para atrair leads apenas para vê-los ir embora sem comprar no último segundo.
                   </p>
                 </div>
               </div>
@@ -659,7 +694,7 @@ export default function Page() {
         {resultados && (
           <div ref={resultadosRef} className="space-y-8">
             
-            {/* 1. Diagnóstico de Saúde */}
+            {/* 1. Diagnóstico de Saúde (CARD 1 - Com a Explicação de Tráfego) */}
             <div className="bg-[#111816] rounded-2xl p-8 border border-[#1a2520]">
               <div className="flex items-center gap-3 mb-6 justify-center md:justify-start">
                 <Activity className={`w-6 h-6 ${getStatusColor(resultados.statusSaude)}`} />
@@ -691,55 +726,95 @@ export default function Page() {
                     className={`shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center ${getStatusBg(resultados.statusSaude)}`}
                   ></div>
                 </div>
-                <p className="text-xs text-gray-400 text-center md:text-left mb-4">
+                <p className="text-xs text-gray-400 text-center md:text-left mb-6">
                   {resultados.statusSaude === "Critico"
                     ? "ATENÇÃO: Vazamento grave identificado. Seu tráfego está sendo incinerado na etapa final (<30%). A prioridade máxima é estancar essa perda técnica."
                     : resultados.statusSaude === "Padrao"
                       ? "CUIDADO: Zona de estagnação (30-60%). Você paga caro pelo lead, mas deixa metade do faturamento para trás. É funcional, mas financeiramente ineficiente."
                       : "Sua conversão é eficiente (>60%), mas cuidado: na escala, os clientes que não compram (40%) representam a maior fatia de lucro líquido desperdiçado."}
                 </p>
+
+                {/* BLOCO EXPLICATIVO DE TRÁFEGO (MOVIDO PARA CÁ) */}
+                <div className="bg-[#0a0f0d] p-4 rounded-lg border border-gray-800 text-xs text-gray-400">
+                    <div className="flex items-center gap-2 mb-2 text-white font-semibold">
+                      <HelpCircle className="w-4 h-4 text-[#7ef542]" />
+                      Entenda o vazamento de tráfego:
+                    </div>
+                    {modoDetalhado ? (
+                      <p>
+                        Com sua taxa atual de {resultados.taxaConversaoAtual}%, você precisou de aprox.{" "}
+                        <span className="text-white font-bold">{formatNumber(resultados.totalVisitasEstimadas)} visitas</span> para gerar <span className="text-[#7ef542] font-bold">{resultados.vendas} vendas.</span>
+                        Isso significa que <span className="text-red-400 font-bold">{formatNumber(resultados.carrinhosAbandonados)} pessoas</span> chegaram ao pagamento e desistiram.
+                      </p>
+                    ) : (
+                      <p>
+                        Baseado em benchmarks de mercado, estimamos que para cada venda realizada, cerca de 
+                        <span className="text-red-400 font-bold"> 3 pessoas</span> iniciam o checkout e desistem. Isso gera um volume invisível de leads perdidos.
+                      </p>
+                    )}
+                </div>
+
               </div>
             </div>
 
-            {/* 2. Oportunidade Perdida */}
+            {/* 2. Oportunidade Perdida (Card Financeiro com Grid) */}
             <div className="bg-[#111816] rounded-2xl p-8 border border-[#1a2520]">
               <div className="flex flex-col-reverse md:flex-row items-center justify-between gap-6">
-                <div className="text-center md:text-left">
+                <div className="text-center md:text-left w-full">
                   <p className="text-sm text-gray-400 uppercase tracking-wide mb-1">
                     Possibilidade de Faturamento Perdida Mensalmente
                   </p>
                   <h2 className="text-4xl md:text-5xl font-bold text-[#7ef542] mb-2">
-                    {formatResultCurrency(resultados.oportunidadePerdida)}
+                    {formatResultCurrency(resultados.oportunidadePerdidaTotal)}
                   </h2>
                   <p className="text-sm text-white max-w-lg mb-4">
-                    Considerando sua taxa atual, estimamos que{" "}
-                    <span className="font-bold text-[#7ef542]">
-                      {formatNumber(Math.round(resultados.oportunidadePerdida / resultados.ticketMedio))} leads
-                    </span>{" "}
-                    chegaram ao pagamento e não concluíram.
+                    Considerando sua taxa atual, este é o valor que sua operação deixou de faturar este mês por ineficiência no checkout e funil.
                   </p>
 
                   <div className="bg-[#0a0f0d] p-4 rounded-lg border border-gray-800 text-xs text-gray-400 mt-4 mb-4">
-                    <div className="flex items-center gap-2 mb-2 text-white font-semibold">
-                      <HelpCircle className="w-4 h-4 text-[#7ef542]" />
-                      De onde veio esse número?
+                    <p className="font-semibold text-white mb-3">Composição do Valor Perdido:</p>
+                    
+                    {/* VISUALIZAÇÃO EM GRID DOS VALORES */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-center">
+                        {/* Card Principal */}
+                        <div className="bg-[#111816] p-3 rounded border border-green-500/30 shadow-sm">
+                           <p className="text-[10px] text-green-500 uppercase font-bold mb-1">Produto Principal</p>
+                           <p className="text-sm text-white font-mono font-bold">{formatResultCurrency(resultados.perdaPrincipal)}</p>
+                        </div>
+                        
+                        {/* Card Upsell */}
+                        <div className={`p-3 rounded border ${resultados.cenarioUpsell === "sim" ? 'border-green-500/30 bg-green-500/5' : 'border-red-500/30 bg-red-900/10'}`}>
+                           <div className="flex items-center justify-center gap-1 mb-1">
+                              <p className={`text-[10px] uppercase font-bold ${resultados.cenarioUpsell === "sim" ? 'text-green-500' : 'text-red-500'}`}>Upsell</p>
+                           </div>
+                           <p className={`text-sm font-mono font-bold ${resultados.cenarioUpsell === "sim" ? 'text-white' : 'text-gray-400'}`}>
+                             {formatResultCurrency(resultados.perdaUpsellPotencial)}
+                           </p>
+                           {resultados.cenarioUpsell === "nao" && <p className="text-[9px] text-red-400 mt-1 font-semibold">Oportunidade Perdida</p>}
+                        </div>
+
+                        {/* Card Downsell */}
+                        <div className={`p-3 rounded border ${resultados.cenarioDownsell === "sim" ? 'border-green-500/30 bg-green-500/5' : 'border-red-500/30 bg-red-900/10'}`}>
+                           <div className="flex items-center justify-center gap-1 mb-1">
+                              <p className={`text-[10px] uppercase font-bold ${resultados.cenarioDownsell === "sim" ? 'text-green-500' : 'text-red-500'}`}>Downsell</p>
+                           </div>
+                           <p className={`text-sm font-mono font-bold ${resultados.cenarioDownsell === "sim" ? 'text-white' : 'text-gray-400'}`}>
+                              {formatResultCurrency(resultados.perdaDownsellPotencial)}
+                           </p>
+                           {resultados.cenarioDownsell === "nao" && <p className="text-[9px] text-red-400 mt-1 font-semibold">Oportunidade Perdida</p>}
+                        </div>
                     </div>
-                    {modoDetalhado ? (
-                      <p>
-                        Com {resultados.taxaConversaoAtual}% de conversão, você precisou de aprox.{" "}
-                        {formatNumber(resultados.totalVisitasEstimadas)} visitas para gerar {resultados.vendas} vendas.
-                        A diferença ({formatNumber(resultados.totalVisitasEstimadas - resultados.vendas)}) são as
-                        pessoas que desistiram.
-                      </p>
-                    ) : (
-                      <p>
-                        Atenção: Embora operações eficientes registrem entre 5 a 7 tentativas falhas, nós utilizamos um
-                        cálculo propositalmente conservador de apenas{" "}
-                        <span className="font-bold text-[#7ef542]">
-                          3 tentativas de compra sem finalização para cada 1 venda
-                        </span>
-                        . Isso significa que este número é o cenário "menos pior".
-                      </p>
+
+                    {/* Texto Explicativo para "NÃO" */}
+                    {(resultados.cenarioUpsell === "nao" || resultados.cenarioDownsell === "nao") && (
+                       <div className="mt-4 pt-3 border-t border-gray-800 text-[10px] text-gray-500 italic space-y-1 text-left">
+                          {resultados.cenarioUpsell === "nao" && (
+                            <p><span className="text-red-400">* Upsell:</span> Valor estimado. Se você tivesse essa oferta (150% do ticket), converteria ~20% das vendas recuperadas.</p>
+                          )}
+                          {resultados.cenarioDownsell === "nao" && (
+                            <p><span className="text-red-400">* Downsell:</span> Valor estimado. Se você tivesse essa oferta (30% do ticket), recuperaria ~10% dos leads perdidos.</p>
+                          )}
+                       </div>
                     )}
                   </div>
 
@@ -779,7 +854,7 @@ export default function Page() {
                     </p>
                     <p className="text-5xl font-bold text-[#7ef542] mb-2 text-center md:text-left">
                       {resultados.faturamento > 0
-                        ? ((resultados.oportunidadePerdida / resultados.faturamento) * 100).toFixed(1).replace(".", ",")
+                        ? ((resultados.oportunidadePerdidaTotal / resultados.faturamento) * 100).toFixed(1).replace(".", ",")
                         : "0,00"}
                       %
                     </p>
@@ -787,7 +862,7 @@ export default function Page() {
                       Na prática você está deixando na mesa uma possibilidade de aumento de{" "}
                       <span className="font-semibold text-[#7ef542]">
                         {resultados.faturamento > 0
-                          ? ((resultados.oportunidadePerdida / resultados.faturamento) * 100)
+                          ? ((resultados.oportunidadePerdidaTotal / resultados.faturamento) * 100)
                               .toFixed(1)
                               .replace(".", ",")
                           : "0,0"}
@@ -962,20 +1037,20 @@ export default function Page() {
             {/* SEÇÃO EDUCATIVA EXPANDIDA E PERSONALIZADA (OS 4 CARDS COMEÇAM AQUI) */}
             <div className="grid md:grid-cols-2 gap-6 mb-8 text-left">
               
-              {/* Bloco 1 — A Anatomia do Desperdício */}
+              {/* Bloco 1 — A Ilusão do Tráfego Pago */}
               <div className="bg-gradient-to-br from-gray-50 to-white rounded-xl p-6 border-2 border-gray-200 hover:border-[#7ef542] transition-all shadow-sm">
                 <div className="flex items-start gap-3 mb-4">
                   <div className="w-12 h-12 bg-[#7ef542] rounded-full flex items-center justify-center flex-shrink-0 text-2xl font-bold text-[#0a0f0d]">
                     1
                   </div>
-                  <h4 className="text-xl font-bold text-[#0a0f0d]">A Ilusão do Volume de Vendas</h4>
+                  <h4 className="text-xl font-bold text-[#0a0f0d]">A Ilusão do Tráfego Pago</h4>
                 </div>
                 <div className="space-y-3">
                   <p className="text-gray-700 text-sm leading-relaxed">
-                    {nomeLead}, hoje sua operação fatura <strong>{formatResultCurrency(resultados.faturamento)}</strong>, mas sua taxa de conversão revela um dado alarmante: para cada venda realizada, existem <strong>{modoDetalhado ? "diversas outras" : "pelo menos 3"}</strong> que pararam no checkout.
+                    {nomeLead}, você investe <strong>{formatResultCurrency(parseCurrency(investimentoTrafego))}</strong> por mês. Se sua conversão é de <strong>{resultados.taxaConversaoAtual.toFixed(2)}%</strong>, isso significa que <strong>{resultados.ineficienciaTrafego.toFixed(1)}%</strong> do seu capital é gasto apenas para vencer a barreira técnica do checkout.
                   </p>
                   <p className="text-gray-600 text-sm leading-relaxed">
-                    Estatisticamente, 98% das pessoas que você pagou para atrair via tráfego não compram no primeiro contato. Hoje, você foca apenas nos 2% que compram sozinhos. Os outros 98% são leads qualificados que você está "doando" de graça para seus concorrentes por falta de uma abordagem ativa.
+                    Você está pagando um ágio caríssimo para as plataformas de anúncios para compensar leads que já estavam prontos para comprar, mas ficaram pelo caminho.
                   </p>
                 </div>
               </div>
@@ -990,32 +1065,32 @@ export default function Page() {
                 </div>
                 <div className="space-y-3">
                   <p className="text-gray-700 text-sm leading-relaxed">
-                    O lead que chega ao seu checkout é o seu ativo mais valioso. Ele já superou a barreira da confiança e decidiu que queria o seu produto. Quando ele não finaliza, a falha raramente é do seu marketing ou da sua oferta.
+                    O lead que chega ao checkout é o seu ativo mais caro. Ele superou o conteúdo e a oferta. Ignorar os <strong>{formatNumber(resultados.carrinhosAbandonados)} leads</strong> que abandonaram o carrinho este mês é o mesmo que atrair clientes para uma loja e manter a porta trancada.
                   </p>
                   <div className="bg-orange-50 border-l-4 border-orange-500 p-3 rounded">
                     <p className="text-xs text-orange-900 font-semibold leading-relaxed">
-                      Ignorar os <strong>{formatNumber(Math.round(resultados.oportunidadePerdida / resultados.ticketMedio))} leads</strong> que abandonaram o carrinho este mês é o mesmo que deixar clientes com o dinheiro na mão esperando na porta da sua loja e você simplesmente manter a porta trancada.
+                       A falha raramente é do marketing, mas sim da fricção no momento do pagamento (cartão recusado, pix esquecido).
                     </p>
                   </div>
                 </div>
               </div>
 
-              {/* Bloco 3 — A Matemática do Lucro Líquido */}
+              {/* Bloco 3 — Margem Limpa (Zero CAC) */}
               <div className="bg-gradient-to-br from-gray-50 to-white rounded-xl p-6 border-2 border-gray-200 hover:border-[#7ef542] transition-all shadow-sm">
                 <div className="flex items-start gap-3 mb-4">
                   <div className="w-12 h-12 bg-[#7ef542] rounded-full flex items-center justify-center flex-shrink-0 text-2xl font-bold text-[#0a0f0d]">
                     3
                   </div>
-                  <h4 className="text-xl font-bold text-[#0a0f0d]">Recuperar é 10x Mais Barato</h4>
+                  <h4 className="text-xl font-bold text-[#0a0f0d]">Margem Limpa (Zero CAC)</h4>
                 </div>
                 <div className="space-y-3">
                   <p className="text-gray-700 text-sm leading-relaxed">
-                    Para atrair um novo lead, você paga o custo de aquisição (CPA) total. Para recuperar um lead que já está no checkout, o custo é quase zero, pois o investimento em anúncios já foi feito.
+                     A primeira venda paga os custos (Tráfego, Equipe, Ferramentas). O lucro real do seu negócio está na recuperação, pois o Custo de Aquisição (CAC) desse cliente já foi pago lá atrás.
                   </p>
                   <div className="bg-[#7ef542]/10 p-4 rounded-lg border border-[#7ef542]/30">
-                    <p className="text-sm font-bold text-[#0a0f0d] mb-1">Impacto no seu Bolso:</p>
-                    <p className="text-gray-700 text-xs">
-                      Ao recuperar apenas 10% do seu vazamento atual, você injeta <strong>{formatResultCurrency(resultados.recuperacao10.mensal)}</strong> de lucro líquido direto no seu caixa mensal. Isso soma <strong>{formatResultCurrency(resultados.recuperacao10.anual)}</strong> extras por ano sem gastar um centavo a mais com anúncios.
+                    <p className="text-xs font-bold text-[#0a0f0d]">
+                      <Wallet className="w-4 h-4 inline mr-1 mb-1"/>
+                      Cada real recuperado entra no seu caixa com margem de contribuição quase total. É o dinheiro mais barato que você pode ganhar.
                     </p>
                   </div>
                 </div>
@@ -1034,42 +1109,41 @@ export default function Page() {
                     As plataformas convencionais falham porque enviam e-mails que caem no spam ou mensagens genéricas que são ignoradas. A <strong>Recupera.ia</strong> utiliza uma camada de Inteligência Conversacional via API Oficial que identifica o motivo real da desistência (saldo, dúvida ou esquecimento).
                   </p>
                   <p className="text-gray-400 text-xs italic border-t border-gray-800 pt-3">
-                    Nós não fazemos spam; nós resgatamos a decisão de compra no momento de maior intenção. É a diferença entre um robô chato e um gerente de vendas virtual que trabalha 24h por dia para você.
+                    Identificamos se o seu cliente parou por saldo, dúvida ou erro técnico e intervimos com uma abordagem humana e cirúrgica para garantir que o dinheiro que já era seu volte para o seu caixa.
                   </p>
                 </div>
               </div>
             </div>
 
-            {/* SEÇÃO NOVOS CARDS UPSELL E DOWNSELL */}
-            {/* Estes cards aparecem apenas se o modo detalhado estiver ativo, pois dependem dos inputs de upsell/downsell */}
+            {/* SEÇÃO NOVOS CARDS DINÂMICOS UPSELL E DOWNSELL */}
             {modoDetalhado && (
               <div className="grid md:grid-cols-2 gap-6 mb-12">
                 {/* Card Upsell */}
-                <div className={`rounded-xl p-6 border-2 transition-all ${temUpsell ? 'bg-[#111816] border-yellow-500/50' : 'bg-[#111816] border-red-500/50'}`}>
+                <div className={`rounded-xl p-6 border-2 transition-all ${resultados.cenarioUpsell === "sim" ? 'bg-[#111816] border-yellow-500/50' : 'bg-[#111816] border-red-500/50'}`}>
                   <div className="flex items-center gap-3 mb-3">
-                     <ArrowUpRight className={`w-6 h-6 ${temUpsell ? 'text-yellow-500' : 'text-red-500'}`} />
-                     <h4 className={`text-lg font-bold ${temUpsell ? 'text-yellow-500' : 'text-red-500'}`}>
-                       {temUpsell ? 'Alerta de Oportunidade: Upsell' : 'Risco Crítico: Ausência de Upsell'}
+                     <ArrowUpRight className={`w-6 h-6 ${resultados.cenarioUpsell === "sim" ? 'text-yellow-500' : 'text-red-500'}`} />
+                     <h4 className={`text-lg font-bold ${resultados.cenarioUpsell === "sim" ? 'text-yellow-500' : 'text-red-500'}`}>
+                       {resultados.cenarioUpsell === "sim" ? 'Alerta de Oportunidade: Upsell' : 'Risco Crítico: Ausência de Upsell'}
                      </h4>
                   </div>
                   <p className="text-sm text-gray-300 leading-relaxed">
-                    {temUpsell 
+                    {resultados.cenarioUpsell === "sim"
                       ? `Excelente que você já utiliza Upsell, ${nomeLead}. Porém, se sua recuperação de vendas atua apenas no produto principal, você está recuperando apenas "metade" do cliente. A Recupera.ia resgata a jornada completa, garantindo que o Upsell também seja convertido na recuperação.`
-                      : "Você está ignorando a zona de lucro máximo. O lead que já disse 'SIM' no checkout é 5x mais propenso a comprar um segundo produto imediatamente. Sem Upsell, seu custo de tráfego recai inteiramente sobre um único produto, reduzindo sua margem drasticamente."
+                      : "Você está ignorando a zona de lucro máximo. O lead que já disse 'SIM' no checkout é 5x mais propenso a comprar um segundo produto imediatamente (Upsell). Sem isso, seu custo de tráfego recai inteiramente sobre um único produto, reduzindo sua margem drasticamente."
                     }
                   </p>
                 </div>
 
                 {/* Card Downsell */}
-                <div className={`rounded-xl p-6 border-2 transition-all ${temDownsell ? 'bg-[#111816] border-blue-500/50' : 'bg-[#111816] border-red-500/50'}`}>
+                <div className={`rounded-xl p-6 border-2 transition-all ${resultados.cenarioDownsell === "sim" ? 'bg-[#111816] border-blue-500/50' : 'bg-[#111816] border-red-500/50'}`}>
                   <div className="flex items-center gap-3 mb-3">
-                     {temDownsell ? <AlertOctagon className="w-6 h-6 text-blue-500" /> : <ArrowDownRight className="w-6 h-6 text-red-500" />}
-                     <h4 className={`text-lg font-bold ${temDownsell ? 'text-blue-500' : 'text-red-500'}`}>
-                       {temDownsell ? 'Atenção Estratégica: Downsell' : 'Vazamento Crítico: Sem Downsell'}
+                     {resultados.cenarioDownsell === "sim" ? <AlertOctagon className="w-6 h-6 text-blue-500" /> : <ArrowDownRight className="w-6 h-6 text-red-500" />}
+                     <h4 className={`text-lg font-bold ${resultados.cenarioDownsell === "sim" ? 'text-blue-500' : 'text-red-500'}`}>
+                       {resultados.cenarioDownsell === "sim" ? 'Atenção Estratégica: Downsell' : 'Vazamento Crítico: Sem Downsell'}
                      </h4>
                   </div>
                   <p className="text-sm text-gray-300 leading-relaxed">
-                    {temDownsell 
+                    {resultados.cenarioDownsell === "sim"
                       ? "Estratégia correta, mas perigosa: O Downsell sem uma inteligência de recuperação humanizada muitas vezes serve apenas para 'baratear' seu produto sem necessidade. Nossa IA intervém para converter o valor cheio antes de permitir a queda para o Downsell."
                       : "Você não oferece uma rota de fuga para o lead que achou o preço alto ou o momento errado. Sem Downsell, o lead sai do seu checkout sem nenhuma alternativa e o seu investimento em tráfego para atraí-lo é 100% perdido."
                     }
