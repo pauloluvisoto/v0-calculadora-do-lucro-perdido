@@ -193,8 +193,24 @@ export default function Page() {
   }
 
   // --- LÓGICA PRINCIPAL DE CÁLCULO ---
+  const salvarLead = async (payload: any) => {
+    try {
+      const res = await fetch("/api/leads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      })
 
-  const calcular = () => {
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        console.error("Falha ao salvar lead:", err)
+      }
+    } catch (e) {
+      console.error("Erro ao chamar /api/leads:", e)
+    }
+  }
+
+    const calcular = () => {
     if (!nomeLead.trim() || !whatsapp.trim()) {
       alert("Por favor, preencha os campos obrigatórios: Nome e WhatsApp.")
       return
@@ -235,8 +251,8 @@ export default function Page() {
     } else {
       // Modo Simplificado: Estimativas de Mercado
       vendas = Math.round(fat / ticket)
-      carrinhosAband = vendas * 3 
-      taxaAtual = 25 
+      carrinhosAband = vendas * 3
+      taxaAtual = 25
       visitasEstimadas = vendas * 4
     }
 
@@ -246,23 +262,16 @@ export default function Page() {
     // 3. Cálculo de Perda de Ecossistema (Upsell/Downsell)
     let valUpsell = 0
     let valDownsell = 0
-    
+
     if (valorUpsell) valUpsell = parseCurrency(valorUpsell)
     if (valorDownsell) valDownsell = parseCurrency(valorDownsell)
 
-    // Base de cálculo para Potencial:
-    // Se tem valor, usa o valor. Se não tem, usa estimativa (150% do ticket para up, 30% para down).
-    const upsellBase = (valUpsell > 0) ? valUpsell : (ticket * 1.5) 
-    const downsellBase = (valDownsell > 0) ? valDownsell : (ticket * 0.3)
+    const upsellBase = valUpsell > 0 ? valUpsell : ticket * 1.5
+    const downsellBase = valDownsell > 0 ? valDownsell : ticket * 0.3
 
-    // CÁLCULO DOS POTENCIAIS (Para exibição no GRID)
-    // Upsell: 20% de conversão sobre os recuperados
-    const perdaUpsellPotencial = carrinhosAband * 0.20 * upsellBase
-    
-    // Downsell: 10% de conversão sobre os perdidos
-    const perdaDownsellPotencial = carrinhosAband * 0.10 * downsellBase
+    const perdaUpsellPotencial = carrinhosAband * 0.2 * upsellBase
+    const perdaDownsellPotencial = carrinhosAband * 0.1 * downsellBase
 
-    // SOMA REAL PARA O TOTAL (Só soma se tiver marcado SIM)
     let oportunidadePerdidaTotal = perdaPrincipal
     if (temUpsell) oportunidadePerdidaTotal += perdaUpsellPotencial
     if (temDownsell) oportunidadePerdidaTotal += perdaDownsellPotencial
@@ -272,7 +281,7 @@ export default function Page() {
     let ineficiencia = 0
 
     if (investimentoAd > 0) {
-      const benchmarkIdeal = 50 
+      const benchmarkIdeal = 50
       if (taxaAtual < benchmarkIdeal) {
         ineficiencia = ((benchmarkIdeal - taxaAtual) / benchmarkIdeal) * 100
         desperdicio = investimentoAd * (ineficiencia / 100)
@@ -289,17 +298,46 @@ export default function Page() {
     const recuperacao20 = oportunidadePerdidaTotal * 0.2
     const recuperacao34 = oportunidadePerdidaTotal * 0.34
 
+    // ✅ AQUI “LIGA” O FORM: salva no backend (/api/leads)
+    // (sem travar a tela; se falhar, só loga no console)
+    salvarLead({
+      nome: nomeLead,
+      whatsapp,
+      produto_nome: nomeProduto,
+      produto_tipo: tipoProduto,
+      nicho,
+
+      faturamento_mensal: fat,
+      ticket_medio: ticket,
+
+      modo: modoDetalhado ? "detalhado" : "simplificado",
+      vendas_realizadas: modoDetalhado ? Number(vendasRealizadas || 0) : null,
+      taxa_conversao_declarada: modoDetalhado ? Number.parseFloat(taxaConversao.replace(",", ".")) : null,
+      investimento_trafego: investimentoAd || null,
+
+      tem_upsell: temUpsell,
+      valor_upsell: temUpsell ? parseCurrency(valorUpsell) : null,
+
+      tem_downsell: temDownsell,
+      valor_downsell: temDownsell ? parseCurrency(valorDownsell) : null,
+
+      // opcional, mas ajuda debug/analytics
+      oportunidade_perdida_total: oportunidadePerdidaTotal,
+      carrinhos_abandonados: carrinhosAband,
+      visitas_estimadas: visitasEstimadas,
+    })
+
     setResultados({
       faturamento: fat,
       ticketMedio: ticket,
       vendas: vendas,
+
       perdaPrincipal: perdaPrincipal,
-      
-      perdaUpsellPotencial: perdaUpsellPotencial, 
+      perdaUpsellPotencial: perdaUpsellPotencial,
       perdaDownsellPotencial: perdaDownsellPotencial,
 
-      oportunidadePerdidaTotal: oportunidadePerdidaTotal, 
-      
+      oportunidadePerdidaTotal: oportunidadePerdidaTotal,
+
       taxaConversaoAtual: taxaAtual,
       statusSaude: status,
       desperdicioTrafego: desperdicio,
@@ -315,7 +353,7 @@ export default function Page() {
       recuperacao20: { mensal: recuperacao20, anual: recuperacao20 * 12 },
       recuperacao34: { mensal: recuperacao34, anual: recuperacao34 * 12 },
       carrinhosAbandonados: carrinhosAband,
-      
+
       cenarioUpsell: temUpsell ? "sim" : "nao",
       cenarioDownsell: temDownsell ? "sim" : "nao",
     })
@@ -324,6 +362,7 @@ export default function Page() {
       resultadosRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
     }, 100)
   }
+
 
   // --- HELPERS DE EXIBIÇÃO ---
 
