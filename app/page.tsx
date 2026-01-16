@@ -246,8 +246,8 @@ const salvarLead = async (payload: any) => {
     } else {
       // Modo Simplificado: Estimativas de Mercado
       vendas = Math.round(fat / ticket)
-      carrinhosAband = vendas * 3 
-      taxaAtual = 25 
+      carrinhosAband = vendas * 3
+      taxaAtual = 25
       visitasEstimadas = vendas * 4
     }
 
@@ -257,14 +257,14 @@ const salvarLead = async (payload: any) => {
     // 3. Cálculo de Perda de Ecossistema (Upsell/Downsell)
     let valUpsell = 0
     let valDownsell = 0
-    
+
     if (valorUpsell) valUpsell = parseCurrency(valorUpsell)
     if (valorDownsell) valDownsell = parseCurrency(valorDownsell)
 
     // Base de cálculo para Potencial (Se não tiver valor, estima)
     // Upsell = 1.5x do ticket (Mais caro)
     // Downsell = 0.3x do ticket (Mais barato)
-    const upsellBase = (valUpsell > 0) ? valUpsell : (ticket * 1.5) 
+    const upsellBase = (valUpsell > 0) ? valUpsell : (ticket * 1.5)
     const downsellBase = (valDownsell > 0) ? valDownsell : (ticket * 0.3)
 
     // CÁLCULO DOS POTENCIAIS (Exibidos nos cards verdes ou vermelhos)
@@ -284,7 +284,7 @@ const salvarLead = async (payload: any) => {
     let ineficiencia = 0
 
     if (investimentoAd > 0) {
-      const benchmarkIdeal = 50 
+      const benchmarkIdeal = 50
       if (taxaAtual < benchmarkIdeal) {
         ineficiencia = ((benchmarkIdeal - taxaAtual) / benchmarkIdeal) * 100
         desperdicio = investimentoAd * (ineficiencia / 100)
@@ -300,52 +300,43 @@ const salvarLead = async (payload: any) => {
     const recuperacao10 = oportunidadePerdidaTotal * 0.1
     const recuperacao20 = oportunidadePerdidaTotal * 0.2
     const recuperacao34 = oportunidadePerdidaTotal * 0.34
-const aumentoPercentual = fat > 0 ? (oportunidadePerdidaTotal / fat) * 100 : null
+    const aumentoPercentual = fat > 0 ? (oportunidadePerdidaTotal / fat) * 100 : null
 
-await salvarLead({
-  nome: nomeLead,
-  whatsapp,
-
-  produto_nome: nomeProduto || null,
-  produto_tipo: tipoProduto || null,
-  nicho: nicho || null,
-
-  faturamento_mensal: fat,
-  ticket_medio: ticket,
-
-  vendas_realizadas: modoDetalhado ? vendas : null,
-  taxa_conversao_declarada: modoDetalhado ? taxaAtual : null,
-  investimento_trafego: modoDetalhado ? investimentoAd : null,
-
-  tem_upsell: temUpsell,
-  valor_upsell: temUpsell ? (valorUpsell ? parseCurrency(valorUpsell) : null) : null,
-
-  tem_downsell: temDownsell,
-  valor_downsell: temDownsell ? (valorDownsell ? parseCurrency(valorDownsell) : null) : null,
-
-  oportunidade_perdida_total: oportunidadePerdidaTotal,
-  perda_principal: perdaPrincipal,
-  perda_upsell_potencial: perdaUpsellPotencial,
-  perda_downsell_potencial: perdaDownsellPotencial,
-
-  status_saude: status,
-  ineficiencia_tecnica: ineficiencia,
-  desperdicio_trafego: desperdicio,
-  projecao_anual_ltv: perdaLTV,
-
-  // se você criou essas colunas no Supabase:
-  aumento_percentual: aumentoPercentual,
-  projecao_3m: oportunidadePerdidaTotal * 3,
-  projecao_6m: oportunidadePerdidaTotal * 6,
-
-  ganho_mensal_10: recuperacao10,
-  ganho_mensal_20: recuperacao20,
-  ganho_mensal_34: recuperacao34,
-
-  ganho_anual_10: recuperacao10 * 12,
-  ganho_anual_20: recuperacao20 * 12,
-  ganho_anual_34: recuperacao34 * 12,
-})
+    // Correção: Agora passando o objeto corretamente para a função assíncrona
+    await salvarLead({
+      nome: nomeLead,
+      whatsapp,
+      produto_nome: nomeProduto || null,
+      produto_tipo: tipoProduto || null,
+      nicho: nicho || null,
+      faturamento_mensal: fat,
+      ticket_medio: ticket,
+      vendas_realizadas: modoDetalhado ? vendas : null,
+      taxa_conversao_declarada: modoDetalhado ? taxaAtual : null,
+      investimento_trafego: modoDetalhado ? investimentoAd : null,
+      tem_upsell: temUpsell,
+      valor_upsell: temUpsell ? (valorUpsell ? parseCurrency(valorUpsell) : null) : null,
+      tem_downsell: temDownsell,
+      valor_downsell: temDownsell ? (valorDownsell ? parseCurrency(valorDownsell) : null) : null,
+      oportunidade_perdida_total: oportunidadePerdidaTotal,
+      perda_principal: perdaPrincipal,
+      perda_upsell_potencial: perdaUpsellPotencial,
+      perda_downsell_potencial: perdaDownsellPotencial,
+      status_saude: status,
+      ineficiencia_tecnica: ineficiencia,
+      desperdicio_trafego: desperdicio,
+      projecao_anual_ltv: perdaLTV,
+      // se você criou essas colunas no Supabase:
+      aumento_percentual: aumentoPercentual,
+      projecao_3m: oportunidadePerdidaTotal * 3,
+      projecao_6m: oportunidadePerdidaTotal * 6,
+      ganho_mensal_10: recuperacao10,
+      ganho_mensal_20: recuperacao20,
+      ganho_mensal_34: recuperacao34,
+      ganho_anual_10: recuperacao10 * 12,
+      ganho_anual_20: recuperacao20 * 12,
+      ganho_anual_34: recuperacao34 * 12,
+    })
 
     setResultados({
       faturamento: fat,
@@ -821,91 +812,143 @@ await salvarLead({
             </div>
 
             {/* 2. Oportunidade Perdida (Card Financeiro com Grid) */}
-            <div className="bg-[#111816] rounded-2xl p-8 border border-[#1a2520]">
-              <div className="flex flex-col-reverse md:flex-row items-center justify-between gap-6">
-                <div className="text-center md:text-left w-full">
-                  <p className="text-sm text-gray-400 uppercase tracking-wide mb-1">
-                    Possibilidade de Faturamento Perdida Mensalmente
-                  </p>
-                  <h2 className="text-4xl md:text-5xl font-bold text-[#7ef542] mb-2">
-                    {formatResultCurrency(resultados.oportunidadePerdidaTotal)}
-                  </h2>
-                  <p className="text-sm text-white max-w-lg mb-4">
-                    Considerando sua taxa atual, este é o valor que sua operação deixou de faturar este mês por ineficiência no checkout e funil.
-                  </p>
+<div className="bg-[#111816] rounded-2xl p-8 border border-[#1a2520]">
+  <div className="flex flex-col-reverse md:flex-row items-center justify-between gap-6">
+    <div className="text-center md:text-left w-full">
+      <p className="text-sm text-gray-400 uppercase tracking-wide mb-1">
+        Possibilidade de Faturamento Perdida Mensalmente
+      </p>
 
-                  <div className="bg-[#0a0f0d] p-4 rounded-lg border border-gray-800 text-xs text-gray-400 mt-4 mb-4">
-                    <p className="font-semibold text-white mb-3">Composição do Valor Perdido:</p>
-                    
-                    {/* VISUALIZAÇÃO EM GRID DOS VALORES */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-center">
-                        {/* Card Principal */}
-                        <div className="bg-[#111816] p-3 rounded border border-green-500/30 shadow-sm">
-                           <p className="text-[10px] text-green-500 uppercase font-bold mb-1">Produto Principal</p>
-                           <p className="text-sm text-white font-mono font-bold">{formatResultCurrency(resultados.perdaPrincipal)}</p>
-                        </div>
-                        
-                        {/* Card Upsell */}
-                        <div className={`p-3 rounded border ${resultados.cenarioUpsell === "sim" ? 'border-green-500/30 bg-green-500/5' : 'border-red-500/30 bg-red-900/10'}`}>
-                           <div className="flex items-center justify-center gap-1 mb-1">
-                              <p className={`text-[10px] uppercase font-bold ${resultados.cenarioUpsell === "sim" ? 'text-green-500' : 'text-red-500'}`}>Upsell</p>
-                           </div>
-                           <p className={`text-sm font-mono font-bold ${resultados.cenarioUpsell === "sim" ? 'text-white' : 'text-gray-400'}`}>
-                             {formatResultCurrency(resultados.perdaUpsellPotencial)}
-                           </p>
-                           {resultados.cenarioUpsell === "nao" && <p className="text-[9px] text-red-400 mt-1 font-semibold">Oportunidade Perdida</p>}
-                        </div>
+      <h2 className="text-4xl md:text-5xl font-bold text-[#7ef542] mb-2">
+        {formatResultCurrency(resultados.oportunidadePerdidaTotal)}
+      </h2>
 
-                        {/* Card Downsell */}
-                        <div className={`p-3 rounded border ${resultados.cenarioDownsell === "sim" ? 'border-green-500/30 bg-green-500/5' : 'border-red-500/30 bg-red-900/10'}`}>
-                           <div className="flex items-center justify-center gap-1 mb-1">
-                              <p className={`text-[10px] uppercase font-bold ${resultados.cenarioDownsell === "sim" ? 'text-green-500' : 'text-red-500'}`}>Downsell</p>
-                           </div>
-                           <p className={`text-sm font-mono font-bold ${resultados.cenarioDownsell === "sim" ? 'text-white' : 'text-gray-400'}`}>
-                              {formatResultCurrency(resultados.perdaDownsellPotencial)}
-                           </p>
-                           {resultados.cenarioDownsell === "nao" && <p className="text-[9px] text-red-400 mt-1 font-semibold">Oportunidade Perdida</p>}
-                        </div>
-                    </div>
+      <p className="text-sm text-white max-w-lg mb-4">
+        Considerando sua taxa atual, este é o valor que sua operação deixou de faturar este mês por ineficiência no checkout e funil.
+      </p>
 
-                    {/* Texto Explicativo para "NÃO" */}
-                    {(resultados.cenarioUpsell === "nao" || resultados.cenarioDownsell === "nao") && (
-                       <div className="mt-4 pt-3 border-t border-gray-800 text-[10px] text-gray-500 italic space-y-1 text-left">
-                          {resultados.cenarioUpsell === "nao" && (
-                            <p><span className="text-red-400">* Upsell:</span> Estimativa baseada em 150% do ticket principal com 20% de conversão sobre recuperados.</p>
-                          )}
-                          {resultados.cenarioDownsell === "nao" && (
-                            <p><span className="text-red-400">* Downsell:</span> Estimativa baseada em 30% do ticket principal com 10% de conversão sobre perdidos.</p>
-                          )}
-                       </div>
-                    )}
-                  </div>
+      <div className="bg-[#0a0f0d] p-4 rounded-lg border border-gray-800 text-xs text-gray-400 mt-4 mb-4">
+        <p className="font-semibold text-white mb-3">Composição do Valor Perdido:</p>
 
-                  {resultados.desperdicioTrafego > 0 && (
-                    <div className="mt-4 bg-red-900/20 border border-red-500/30 p-6 rounded-lg inline-block text-left w-full">
-                      <div className="flex items-center gap-2 text-red-400 mb-3 font-bold text-lg">
-                        <Target className="w-5 h-5" /> Custo de Aquisição (CPA) Inflacionado
-                      </div>
-                      
-                      <div className="space-y-4 text-sm text-gray-300 leading-relaxed">
-                        <p>
-                          {nomeLead}, sua <strong>Ineficiência Técnica de {resultados.ineficienciaTrafego.toFixed(1).replace('.', ',')}%</strong> atua como um imposto invisível sobre cada centavo investido em anúncios.
-                        </p>
-                        
-                        <p>
-                          Na prática, para cada venda que você realiza hoje, você é obrigado a atrair <strong>{((50 / resultados.taxaConversaoAtual)).toFixed(1).replace('.', ',')} vezes mais tráfego</strong> do que uma operação de alta performance precisaria para gerar o mesmo faturamento.
-                        </p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-center">
+          <div className="bg-[#111816] p-3 rounded border border-green-500/30 shadow-sm">
+            <p className="text-[10px] text-green-500 uppercase font-bold mb-1">Produto Principal</p>
+            <p className="text-sm text-white font-mono font-bold">
+              {formatResultCurrency(resultados.perdaPrincipal)}
+            </p>
+          </div>
 
-                        <div className="bg-black/40 p-4 rounded border-l-4 border-red-500 text-red-200">
-                          <strong>Veredito Financeiro:</strong> Dos {formatResultCurrency(parseCurrency(investimentoTrafego))} investidos este mês, <strong>{formatResultCurrency(resultados.desperdicioTrafego)}</strong> foram gastos apenas para "empurrar" leads através de um checkout com alta fricção. 
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-                <div className="text-6xl">💸</div>
-              </div>
+          <div
+            className={`p-3 rounded border ${
+              resultados.cenarioUpsell === "sim"
+                ? "border-green-500/30 bg-green-500/5"
+                : "border-red-500/30 bg-red-900/10"
+            }`}
+          >
+            <div className="flex items-center justify-center gap-1 mb-1">
+              <p
+                className={`text-[10px] uppercase font-bold ${
+                  resultados.cenarioUpsell === "sim" ? "text-green-500" : "text-red-500"
+                }`}
+              >
+                Upsell
+              </p>
             </div>
+            <p
+              className={`text-sm font-mono font-bold ${
+                resultados.cenarioUpsell === "sim" ? "text-white" : "text-gray-400"
+              }`}
+            >
+              {formatResultCurrency(resultados.perdaUpsellPotencial)}
+            </p>
+            {resultados.cenarioUpsell === "nao" && (
+              <p className="text-[9px] text-red-400 mt-1 font-semibold">Oportunidade Perdida</p>
+            )}
+          </div>
+
+          <div
+            className={`p-3 rounded border ${
+              resultados.cenarioDownsell === "sim"
+                ? "border-green-500/30 bg-green-500/5"
+                : "border-red-500/30 bg-red-900/10"
+            }`}
+          >
+            <div className="flex items-center justify-center gap-1 mb-1">
+              <p
+                className={`text-[10px] uppercase font-bold ${
+                  resultados.cenarioDownsell === "sim" ? "text-green-500" : "text-red-500"
+                }`}
+              >
+                Downsell
+              </p>
+            </div>
+            <p
+              className={`text-sm font-mono font-bold ${
+                resultados.cenarioDownsell === "sim" ? "text-white" : "text-gray-400"
+              }`}
+            >
+              {formatResultCurrency(resultados.perdaDownsellPotencial)}
+            </p>
+            {resultados.cenarioDownsell === "nao" && (
+              <p className="text-[9px] text-red-400 mt-1 font-semibold">Oportunidade Perdida</p>
+            )}
+          </div>
+        </div>
+
+        {(resultados.cenarioUpsell === "nao" || resultados.cenarioDownsell === "nao") && (
+          <div className="mt-4 pt-3 border-t border-gray-800 text-[10px] text-gray-500 italic space-y-3 text-left">
+            {resultados.cenarioUpsell === "nao" && (
+              <p>
+                <span className="text-red-400 font-bold">* Upsell:</span> Se você tivesse essa oferta ativa, teria convertida mais
+                20% das vendas realizadas (ofertando um produto de maior valor para quem já comprou o principal). O valor em vermelho é o dinheiro deixado na mesa.
+              </p>
+            )}
+
+            {resultados.cenarioDownsell === "nao" && (
+              <p>
+                <span className="text-red-400 font-bold">* Downsell:</span> Se você tivesse essa oferta ativa, teria recuperado mais
+                10% de conversão vendendo um produto de menor valor para quem não conseguiu comprar o produto principal (mais caro).
+              </p>
+            )}
+          </div>
+        )}
+
+        <div className="mt-3 pt-2 border-t border-gray-800/50 text-[9px] text-gray-600 italic text-left">
+          <p>* Taxas de conversão consideradas para cálculo: 20% para Upsell (em cima das vendas efetuadas) e 10% para Downsell (em cima das vendas não concluidas).</p>
+        </div>
+      </div>
+
+      {resultados.desperdicioTrafego > 0 && (
+        <div className="mt-4 bg-red-900/20 border border-red-500/30 p-6 rounded-lg inline-block text-left w-full">
+          <div className="flex items-center gap-2 text-red-400 mb-3 font-bold text-lg">
+            <Target className="w-5 h-5" /> Custo de Aquisição (CPA) Inflacionado
+          </div>
+
+          <div className="space-y-4 text-sm text-gray-300 leading-relaxed">
+            <p>
+              {nomeLead}, sua <strong>Ineficiência Técnica de {resultados.ineficienciaTrafego.toFixed(1).replace(".", ",")}%</strong>{" "}
+              atua como um imposto invisível sobre cada centavo investido em anúncios.
+            </p>
+
+            <p>
+              Na prática, para cada venda que você realiza hoje, você é obrigado a atrair{" "}
+              <strong>{(50 / resultados.taxaConversaoAtual).toFixed(1).replace(".", ",")} vezes mais tráfego</strong>{" "}
+              do que uma operação de alta performance precisaria para gerar o mesmo faturamento.
+            </p>
+
+            <div className="bg-black/40 p-4 rounded border-l-4 border-red-500 text-red-200">
+              <strong>Veredito Financeiro:</strong> Dos {formatResultCurrency(parseCurrency(investimentoTrafego))} investidos este mês,{" "}
+              <strong>{formatResultCurrency(resultados.desperdicioTrafego)}</strong> foram gastos apenas para "empurrar" leads através de um checkout com alta fricção.
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+
+    <div className="text-6xl">💸</div>
+  </div>
+</div>
+
 
             {/* Passo 5: Diagnóstico Final */}
             <div className="relative mt-12 mb-12">
