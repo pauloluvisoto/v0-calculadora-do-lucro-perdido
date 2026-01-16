@@ -418,6 +418,8 @@ else if (taxaAtual >= limiteExcelente) status = "Excelente"
     faturamento_mensal: fat,
     ticket_medio: ticket,
     vendas_realizadas: modoDetalhado && vendasInput > 0 ? vendasInput : null,
+    abandonos_checkout_declarado: modoDetalhado && abandonosInput > 0 ? abandonosInput : null,
+    carrinhos_abandonados_calculado: carrinhosAband,
     taxa_conversao_declarada: modoDetalhado && taxaInput > 0 ? taxaInput : null,
     investimento_trafego: modoDetalhado ? investimentoAd : null,
     tem_upsell: temUpsell,
@@ -1183,8 +1185,7 @@ const vezesMais = resultados.taxaConversaoAtual > 0 ? benchmarkIdeal / resultado
                     </div>
                     {modoDetalhado ? (
                       <p>
-                        Com a taxa considerada de {resultados.taxaConversaoAtual.toFixed(2).replace(".", ",")}%, você precisou de aprox.
-, você precisou de aprox.{" "}
+                        Com a taxa considerada de {resultados.taxaConversaoAtual.toFixed(2).replace(".", ",")}%,você precisou de aprox.{" "}
                         <span className="text-white font-bold">{formatNumber(resultados.totalVisitasEstimadas)} visitas</span> para gerar <span className="text-[#7ef542] font-bold">{resultados.vendas} vendas.
                         </span>
                         

@@ -43,6 +43,8 @@ export async function POST(req: Request) {
       vendas_realizadas: body?.vendas_realizadas ?? null,
       taxa_conversao_declarada: body?.taxa_conversao_declarada ?? null,
       investimento_trafego: body?.investimento_trafego ?? null,
+      abandonos_checkout_declarado: body?.abandonos_checkout_declarado ?? null,
+      carrinhos_abandonados_calculado: body?.carrinhos_abandonados_calculado ?? null,
 
       // upsell/downsell
       tem_upsell: body?.tem_upsell ?? null,
@@ -78,7 +80,10 @@ export async function POST(req: Request) {
     const { error } = await supabase.from("leads_calculadora").insert([payload])
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json(
+  { error: error.message, details: error.details, hint: error.hint, code: error.code },
+  { status: 500 }
+)
     }
 
     return NextResponse.json({ ok: true })
