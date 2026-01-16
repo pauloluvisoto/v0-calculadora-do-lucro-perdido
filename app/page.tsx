@@ -206,173 +206,182 @@ const salvarLead = async (payload: any) => {
 }
 
   const calcular = async () => {
-    if (!nomeLead.trim() || !whatsapp.trim()) {
-      alert("Por favor, preencha os campos obrigatórios: Nome e WhatsApp.")
-      return
-    }
-
-    const fat = parseCurrency(faturamento)
-    const ticket = parseCurrency(ticketMedio)
-
-    if (fat <= 0 || ticket <= 0) {
-      alert("Preencha faturamento e ticket corretamente.")
-      return
-    }
-
-    let vendas: number
-    let carrinhosAband: number
-    let taxaAtual = 0
-    const investimentoAd = parseCurrency(investimentoTrafego) || 0
-
-    // 1. Definição de Cenário e Dados Base
-    let visitasEstimadas = 0
-
-    if (modoDetalhado) {
-      const vendasInput = Number(vendasRealizadas)
-      const taxaInput = Number.parseFloat(taxaConversao.replace(",", "."))
-
-      if (vendasInput <= 0 || !taxaInput || taxaInput <= 0) {
-        alert("Por favor, preencha o número de vendas e a taxa de conversão corretamente.")
-        return
-      }
-
-      const totalVisitasCheckout = vendasInput / (taxaInput / 100)
-      const abandonosCalculados = totalVisitasCheckout - vendasInput
-
-      vendas = vendasInput
-      carrinhosAband = Math.round(abandonosCalculados)
-      visitasEstimadas = Math.round(totalVisitasCheckout)
-      taxaAtual = taxaInput
-    } else {
-      // Modo Simplificado: Estimativas de Mercado
-      vendas = Math.round(fat / ticket)
-      carrinhosAband = vendas * 3
-      taxaAtual = 25
-      visitasEstimadas = vendas * 4
-    }
-
-    // 2. Cálculo de Perda Principal (Sempre existe)
-    const perdaPrincipal = carrinhosAband * ticket
-
-    // 3. Cálculo de Perda de Ecossistema (Upsell/Downsell)
-    let valUpsell = 0
-    let valDownsell = 0
-
-    if (valorUpsell) valUpsell = parseCurrency(valorUpsell)
-    if (valorDownsell) valDownsell = parseCurrency(valorDownsell)
-
-    // Base de cálculo para Potencial (Se não tiver valor, estima)
-    // Upsell = 1.5x do ticket (Mais caro)
-    // Downsell = 0.3x do ticket (Mais barato)
-    const upsellBase = (valUpsell > 0) ? valUpsell : (ticket * 1.5)
-    const downsellBase = (valDownsell > 0) ? valDownsell : (ticket * 0.3)
-
-    // CÁLCULO DOS POTENCIAIS (Exibidos nos cards verdes ou vermelhos)
-    // Upsell: 20% de conversão sobre os recuperados (carrinhosAband)
-    const perdaUpsellPotencial = carrinhosAband * 0.20 * upsellBase
-    
-    // Downsell: 10% de conversão sobre os perdidos (carrinhosAband)
-    const perdaDownsellPotencial = carrinhosAband * 0.10 * downsellBase
-
-    // SOMA REAL (Só soma no total grande se tiver marcado SIM)
-    let oportunidadePerdidaTotal = perdaPrincipal
-    if (temUpsell) oportunidadePerdidaTotal += perdaUpsellPotencial
-    if (temDownsell) oportunidadePerdidaTotal += perdaDownsellPotencial
-
-    // 4. Métricas de Eficiência
-    let desperdicio = 0
-    let ineficiencia = 0
-
-    if (investimentoAd > 0) {
-      const benchmarkIdeal = 50
-      if (taxaAtual < benchmarkIdeal) {
-        ineficiencia = ((benchmarkIdeal - taxaAtual) / benchmarkIdeal) * 100
-        desperdicio = investimentoAd * (ineficiencia / 100)
-      }
-    }
-
-    const perdaLTV = oportunidadePerdidaTotal * 12
-
-    let status: "Critico" | "Padrao" | "Excelente" = "Padrao"
-    if (taxaAtual < 30) status = "Critico"
-    else if (taxaAtual > 60) status = "Excelente"
-
-    const recuperacao10 = oportunidadePerdidaTotal * 0.1
-    const recuperacao20 = oportunidadePerdidaTotal * 0.2
-    const recuperacao34 = oportunidadePerdidaTotal * 0.34
-    const aumentoPercentual = fat > 0 ? (oportunidadePerdidaTotal / fat) * 100 : null
-
-    // Correção: Agora passando o objeto corretamente para a função assíncrona
-    await salvarLead({
-      nome: nomeLead,
-      whatsapp,
-      produto_nome: nomeProduto || null,
-      produto_tipo: tipoProduto || null,
-      nicho: nicho || null,
-      faturamento_mensal: fat,
-      ticket_medio: ticket,
-      vendas_realizadas: modoDetalhado ? vendas : null,
-      taxa_conversao_declarada: modoDetalhado ? taxaAtual : null,
-      investimento_trafego: modoDetalhado ? investimentoAd : null,
-      tem_upsell: temUpsell,
-      valor_upsell: temUpsell ? (valorUpsell ? parseCurrency(valorUpsell) : null) : null,
-      tem_downsell: temDownsell,
-      valor_downsell: temDownsell ? (valorDownsell ? parseCurrency(valorDownsell) : null) : null,
-      oportunidade_perdida_total: oportunidadePerdidaTotal,
-      perda_principal: perdaPrincipal,
-      perda_upsell_potencial: perdaUpsellPotencial,
-      perda_downsell_potencial: perdaDownsellPotencial,
-      status_saude: status,
-      ineficiencia_tecnica: ineficiencia,
-      desperdicio_trafego: desperdicio,
-      projecao_anual_ltv: perdaLTV,
-      // se você criou essas colunas no Supabase:
-      aumento_percentual: aumentoPercentual,
-      projecao_3m: oportunidadePerdidaTotal * 3,
-      projecao_6m: oportunidadePerdidaTotal * 6,
-      ganho_mensal_10: recuperacao10,
-      ganho_mensal_20: recuperacao20,
-      ganho_mensal_34: recuperacao34,
-      ganho_anual_10: recuperacao10 * 12,
-      ganho_anual_20: recuperacao20 * 12,
-      ganho_anual_34: recuperacao34 * 12,
-    })
-
-    setResultados({
-      faturamento: fat,
-      ticketMedio: ticket,
-      vendas: vendas,
-      perdaPrincipal: perdaPrincipal,
-      
-      perdaUpsellPotencial: perdaUpsellPotencial, 
-      perdaDownsellPotencial: perdaDownsellPotencial,
-
-      oportunidadePerdidaTotal: oportunidadePerdidaTotal, 
-      
-      taxaConversaoAtual: taxaAtual,
-      statusSaude: status,
-      desperdicioTrafego: desperdicio,
-      ineficienciaTrafego: ineficiencia,
-      totalVisitasEstimadas: visitasEstimadas,
-      perdaLTV: perdaLTV,
-      projecao: {
-        mes3: oportunidadePerdidaTotal * 3,
-        mes6: oportunidadePerdidaTotal * 6,
-        ano1: perdaLTV,
-      },
-      recuperacao10: { mensal: recuperacao10, anual: recuperacao10 * 12 },
-      recuperacao20: { mensal: recuperacao20, anual: recuperacao20 * 12 },
-      recuperacao34: { mensal: recuperacao34, anual: recuperacao34 * 12 },
-      carrinhosAbandonados: carrinhosAband,
-      
-      cenarioUpsell: temUpsell ? "sim" : "nao",
-      cenarioDownsell: temDownsell ? "sim" : "nao",
-    })
-
-    setTimeout(() => {
-      resultadosRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
-    }, 100)
+  if (!nomeLead.trim() || !whatsapp.trim()) {
+    alert("Por favor, preencha os campos obrigatórios: Nome e WhatsApp.")
+    return
   }
+
+  const fat = parseCurrency(faturamento)
+  const ticket = parseCurrency(ticketMedio)
+
+  if (fat <= 0 || ticket <= 0) {
+    alert("Preencha faturamento e ticket corretamente.")
+    return
+  }
+
+  let vendas: number
+  let carrinhosAband: number
+  let taxaAtual = 0
+  const investimentoAd = parseCurrency(investimentoTrafego) || 0
+
+  // 1. Definição de Cenário e Dados Base
+  let visitasEstimadas = 0
+
+  if (modoDetalhado) {
+    const vendasInput = Number(vendasRealizadas)
+    const taxaInput = Number.parseFloat(taxaConversao.replace(",", "."))
+
+    if (vendasInput <= 0 || !taxaInput || taxaInput <= 0) {
+      alert("Por favor, preencha o número de vendas e a taxa de conversão corretamente.")
+      return
+    }
+
+    const totalVisitasCheckout = vendasInput / (taxaInput / 100)
+    const abandonosCalculados = totalVisitasCheckout - vendasInput
+
+    vendas = vendasInput
+    carrinhosAband = Math.round(abandonosCalculados)
+    visitasEstimadas = Math.round(totalVisitasCheckout)
+    taxaAtual = taxaInput
+  } else {
+    // Modo Simplificado: Estimativas de Mercado
+    vendas = Math.round(fat / ticket)
+    carrinhosAband = vendas * 3
+    taxaAtual = 25
+    visitasEstimadas = vendas * 4
+  }
+
+  // 2. Cálculo de Perda Principal (Sempre existe)
+  const perdaPrincipal = carrinhosAband * ticket
+
+  // 3. Cálculo de Perda de Ecossistema (Upsell/Downsell)
+  let valUpsell = 0
+  let valDownsell = 0
+
+  if (valorUpsell) valUpsell = parseCurrency(valorUpsell)
+  if (valorDownsell) valDownsell = parseCurrency(valorDownsell)
+
+  // Base de cálculo para Potencial (Se não tiver valor, estima)
+  // Upsell = 1.5x do ticket (Mais caro)
+  // Downsell = 0.3x do ticket (Mais barato)
+  const upsellBase = valUpsell > 0 ? valUpsell : ticket * 1.5
+  const downsellBase = valDownsell > 0 ? valDownsell : ticket * 0.3
+
+  // ✅ ALTERAÇÃO #1: Upsell em cima das vendas (vendas efetuadas)
+  const perdaUpsellPotencial = vendas * 0.20 * upsellBase
+
+  // Downsell: 10% de conversão sobre as vendas não concluídas (carrinhos abandonados)
+  const perdaDownsellPotencial = carrinhosAband * 0.10 * downsellBase
+
+  // SOMA REAL (Só soma no total grande se tiver marcado SIM)
+  let oportunidadePerdidaTotal = perdaPrincipal
+  if (temUpsell) oportunidadePerdidaTotal += perdaUpsellPotencial
+  if (temDownsell) oportunidadePerdidaTotal += perdaDownsellPotencial
+
+  // 4. Métricas de Eficiência
+  let desperdicio = 0
+  let ineficiencia = 0
+
+  if (investimentoAd > 0) {
+    const benchmarkIdeal = 50
+    if (taxaAtual < benchmarkIdeal) {
+      ineficiencia = ((benchmarkIdeal - taxaAtual) / benchmarkIdeal) * 100
+      desperdicio = investimentoAd * (ineficiencia / 100)
+    }
+  }
+
+  const perdaLTV = oportunidadePerdidaTotal * 12
+
+  let status: "Critico" | "Padrao" | "Excelente" = "Padrao"
+  if (taxaAtual < 30) status = "Critico"
+  else if (taxaAtual > 60) status = "Excelente"
+
+  // ✅ ALTERAÇÃO #2: Recuperações agora consideram taxa de recuperação (10/20/34)
+  // - Produto principal + Upsell em cima das VENDAS RECUPERADAS
+  // - Downsell em cima das NÃO RECUPERADAS
+  const calcularGanhoRecuperacao = (taxaRecuperacao: number) => {
+    const vendasRecuperadas = Math.round(carrinhosAband * taxaRecuperacao)
+    const vendasNaoRecuperadas = Math.max(carrinhosAband - vendasRecuperadas, 0)
+
+    const ganhoPrincipal = vendasRecuperadas * ticket
+    const ganhoUpsell = temUpsell === true ? vendasRecuperadas * 0.20 * upsellBase : 0
+    const ganhoDownsell = temDownsell === true ? vendasNaoRecuperadas * 0.10 * downsellBase : 0
+
+    return ganhoPrincipal + ganhoUpsell + ganhoDownsell
+  }
+
+  const recuperacao10 = calcularGanhoRecuperacao(0.1)
+  const recuperacao20 = calcularGanhoRecuperacao(0.2)
+  const recuperacao34 = calcularGanhoRecuperacao(0.34)
+
+  const aumentoPercentual = fat > 0 ? (oportunidadePerdidaTotal / fat) * 100 : null
+
+  await salvarLead({
+    nome: nomeLead,
+    whatsapp,
+    produto_nome: nomeProduto || null,
+    produto_tipo: tipoProduto || null,
+    nicho: nicho || null,
+    faturamento_mensal: fat,
+    ticket_medio: ticket,
+    vendas_realizadas: modoDetalhado ? vendas : null,
+    taxa_conversao_declarada: modoDetalhado ? taxaAtual : null,
+    investimento_trafego: modoDetalhado ? investimentoAd : null,
+    tem_upsell: temUpsell,
+    valor_upsell: temUpsell ? (valorUpsell ? parseCurrency(valorUpsell) : null) : null,
+    tem_downsell: temDownsell,
+    valor_downsell: temDownsell ? (valorDownsell ? parseCurrency(valorDownsell) : null) : null,
+    oportunidade_perdida_total: oportunidadePerdidaTotal,
+    perda_principal: perdaPrincipal,
+    perda_upsell_potencial: perdaUpsellPotencial,
+    perda_downsell_potencial: perdaDownsellPotencial,
+    status_saude: status,
+    ineficiencia_tecnica: ineficiencia,
+    desperdicio_trafego: desperdicio,
+    projecao_anual_ltv: perdaLTV,
+    aumento_percentual: aumentoPercentual,
+    projecao_3m: oportunidadePerdidaTotal * 3,
+    projecao_6m: oportunidadePerdidaTotal * 6,
+    ganho_mensal_10: recuperacao10,
+    ganho_mensal_20: recuperacao20,
+    ganho_mensal_34: recuperacao34,
+    ganho_anual_10: recuperacao10 * 12,
+    ganho_anual_20: recuperacao20 * 12,
+    ganho_anual_34: recuperacao34 * 12,
+  })
+
+  setResultados({
+    faturamento: fat,
+    ticketMedio: ticket,
+    vendas: vendas,
+    perdaPrincipal: perdaPrincipal,
+    perdaUpsellPotencial: perdaUpsellPotencial,
+    perdaDownsellPotencial: perdaDownsellPotencial,
+    oportunidadePerdidaTotal: oportunidadePerdidaTotal,
+    taxaConversaoAtual: taxaAtual,
+    statusSaude: status,
+    desperdicioTrafego: desperdicio,
+    ineficienciaTrafego: ineficiencia,
+    totalVisitasEstimadas: visitasEstimadas,
+    perdaLTV: perdaLTV,
+    projecao: {
+      mes3: oportunidadePerdidaTotal * 3,
+      mes6: oportunidadePerdidaTotal * 6,
+      ano1: perdaLTV,
+    },
+    recuperacao10: { mensal: recuperacao10, anual: recuperacao10 * 12 },
+    recuperacao20: { mensal: recuperacao20, anual: recuperacao20 * 12 },
+    recuperacao34: { mensal: recuperacao34, anual: recuperacao34 * 12 },
+    carrinhosAbandonados: carrinhosAband,
+    cenarioUpsell: temUpsell ? "sim" : "nao",
+    cenarioDownsell: temDownsell ? "sim" : "nao",
+  })
+
+  setTimeout(() => {
+    resultadosRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+  }, 100)
+}
+
 
   // --- HELPERS DE EXIBIÇÃO ---
 
@@ -918,78 +927,112 @@ const salvarLead = async (payload: any) => {
         </div>
       </div>
 
-      {resultados.desperdicioTrafego > 0 && (
-        <div className="mt-4 bg-red-900/20 border border-red-500/30 p-6 rounded-lg inline-block text-left w-full">
-          <div className="flex items-center gap-2 text-red-400 mb-3 font-bold text-lg">
-            <Target className="w-5 h-5" /> Custo de Aquisição (CPA) Inflacionado
-          </div>
+      {resultados.desperdicioTrafego > 0 && (() => {
+        const investimento = parseCurrency(investimentoTrafego)
+        const vendasCount = resultados.vendas > 0 ? resultados.vendas : 1
 
-          <div className="space-y-4 text-sm text-gray-300 leading-relaxed">
-            <p>
-              {nomeLead}, sua <strong>Ineficiência Técnica de {resultados.ineficienciaTrafego.toFixed(1).replace(".", ",")}%</strong>{" "}
-              atua como um imposto invisível sobre cada centavo investido em anúncios.
-            </p>
+        const cpaAtual = investimento > 0 ? investimento / vendasCount : 0
+        const desperdicioPorVenda = resultados.desperdicioTrafego / vendasCount
+        const cpaEficienteEst = investimento > 0 ? (investimento - resultados.desperdicioTrafego) / vendasCount : 0
 
-            <p>
-              Na prática, para cada venda que você realiza hoje, você é obrigado a atrair{" "}
-              <strong>{(50 / resultados.taxaConversaoAtual).toFixed(1).replace(".", ",")} vezes mais tráfego</strong>{" "}
-              do que uma operação de alta performance precisaria para gerar o mesmo faturamento.
-            </p>
+        const pctPedagio = Math.min(Math.max(resultados.ineficienciaTrafego, 0), 100)
+        const pctEficiente = Math.max(100 - pctPedagio, 0)
 
-            <div className="bg-black/40 p-4 rounded border-l-4 border-red-500 text-red-200">
-              <strong>Veredito Financeiro:</strong> Dos {formatResultCurrency(parseCurrency(investimentoTrafego))} investidos este mês,{" "}
-              <strong>{formatResultCurrency(resultados.desperdicioTrafego)}</strong> foram gastos apenas para "empurrar" leads através de um checkout com alta fricção.
+        const vezesMais = resultados.taxaConversaoAtual > 0 ? (50 / resultados.taxaConversaoAtual) : 0
+
+        return (
+          <div className="mt-6 bg-gradient-to-br from-red-900/25 to-black/30 border border-red-500/30 p-6 md:p-8 rounded-2xl w-full">
+            <div className="flex items-start justify-between gap-4 mb-5">
+              <div>
+                <div className="flex items-center gap-2 text-red-300 font-bold">
+                  <Target className="w-5 h-5" />
+                  <span className="uppercase tracking-wide text-sm">Pedágio do Checkout (CPA Inflacionado)</span>
+                </div>
+                <p className="text-xs text-gray-300 mt-1">
+                  Você está pagando tráfego para levar gente até a porta… mas a porta está pesada.
+                </p>
+              </div>
+
+              <div className="text-right">
+                <p className="text-[11px] text-gray-400">desperdício este mês</p>
+                <p className="text-3xl md:text-4xl font-extrabold text-red-300 leading-none">
+                  {formatResultCurrency(resultados.desperdicioTrafego)}
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-black/30 border border-gray-800 rounded-xl p-4 mb-6">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm text-white font-semibold">De cada R$ 100 em mídia:</p>
+                <span className="text-xs text-gray-400">
+                  Ineficiência:{" "}
+                  <span className="text-red-300 font-bold">{pctPedagio.toFixed(1).replace(".", ",")}%</span>
+                </span>
+              </div>
+
+              <div className="w-full h-3 rounded-full overflow-hidden bg-gray-800 flex">
+                <div className="h-full bg-[#7ef542]" style={{ width: `${pctEficiente}%` }} />
+                <div className="h-full bg-red-500" style={{ width: `${pctPedagio}%` }} />
+              </div>
+
+              <div className="flex items-center justify-between mt-3 text-xs">
+                <div className="flex items-center gap-2">
+                  <span className="inline-block w-2 h-2 rounded-full bg-[#7ef542]" />
+                  <span className="text-gray-200">
+                    <strong className="text-white">R$ {pctEficiente.toFixed(0)}</strong> geram venda
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="inline-block w-2 h-2 rounded-full bg-red-500" />
+                  <span className="text-gray-200">
+                    <strong className="text-red-300">R$ {pctPedagio.toFixed(0)}</strong> viram “pedágio”
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-3 mb-6">
+              <div className="bg-black/30 border border-gray-800 rounded-xl p-4">
+                <p className="text-[11px] text-gray-400 uppercase tracking-wide">CPA médio atual</p>
+                <p className="text-xl font-bold text-white">{formatResultCurrency(cpaAtual)}</p>
+              </div>
+
+              <div className="bg-black/30 border border-red-500/30 rounded-xl p-4">
+                <p className="text-[11px] text-red-200 uppercase tracking-wide">Pedágio por venda</p>
+                <p className="text-xl font-bold text-red-300">{formatResultCurrency(desperdicioPorVenda)}</p>
+              </div>
+
+              <div className="bg-black/30 border border-[#7ef542]/25 rounded-xl p-4">
+                <p className="text-[11px] text-[#b6ff8f] uppercase tracking-wide">Custo eficiente estimado</p>
+                <p className="text-xl font-bold text-[#7ef542]">{formatResultCurrency(cpaEficienteEst)}</p>
+              </div>
+            </div>
+
+            <div className="bg-black/40 p-5 rounded-xl border-l-4 border-red-500">
+              <p className="text-sm text-gray-200 leading-relaxed">
+                <span className="text-white font-bold">{nomeLead}</span>, sua ineficiência técnica de{" "}
+                <span className="text-red-300 font-extrabold">{pctPedagio.toFixed(1).replace(".", ",")}%</span> é um{" "}
+                <span className="text-red-300 font-bold">imposto invisível</span> sobre a mídia.
+                <br />
+                Na prática, você precisa de{" "}
+                <span className="text-white font-bold">{vezesMais.toFixed(1).replace(".", ",")}x</span> mais tráfego para fazer
+                a mesma venda que uma operação com checkout saudável faria com 1x.
+                <br />
+                <br />
+                <span className="text-red-200 font-bold">Veredito:</span> dos{" "}
+                <span className="text-white font-bold">{formatResultCurrency(investimento)}</span> investidos este mês,{" "}
+                <span className="text-red-300 font-extrabold">{formatResultCurrency(resultados.desperdicioTrafego)}</span>{" "}
+                foram pagos como “pedágio”.
+              </p>
             </div>
           </div>
-        </div>
-      )}
+        )
+      })()}
     </div>
 
     <div className="text-6xl">💸</div>
   </div>
 </div>
-
-
-            {/* Passo 5: Diagnóstico Final */}
-            <div className="relative mt-12 mb-12">
-              <div className="bg-gradient-to-br from-[#7ef542]/20 to-[#7ef542]/5 rounded-xl p-8 border-2 border-[#7ef542] hover:border-[#7ef542] transition-all">
-                <div className="flex flex-col-reverse md:flex-row items-center justify-between gap-6">
-                  <div>
-                    <p className="text-xs text-[#7ef542] uppercase tracking-wide mb-1 font-semibold text-center md:text-left">
-                      O Diagnóstico Final
-                    </p>
-                    <p className="text-5xl font-bold text-[#7ef542] mb-2 text-center md:text-left">
-                      {resultados.faturamento > 0
-                        ? ((resultados.oportunidadePerdidaTotal / resultados.faturamento) * 100).toFixed(1).replace(".", ",")
-                        : "0,00"}
-                      %
-                    </p>
-                    <p className="text-sm text-white text-center md:text-left">
-                      Na prática você está deixando na mesa uma possibilidade de aumento de{" "}
-                      <span className="font-semibold text-[#7ef542]">
-                        {resultados.faturamento > 0
-                          ? ((resultados.oportunidadePerdidaTotal / resultados.faturamento) * 100)
-                              .toFixed(1)
-                              .replace(".", ",")
-                          : "0,0"}
-                        %
-                      </span>{" "}
-                      em relação ao seu faturamento atual de{" "}
-                      <span className="font-semibold text-[#7ef542]">
-                        {formatResultCurrency(resultados.faturamento)}
-                      </span>
-                      .
-                      <br />
-                      <br />
-                      <span className="text-lg font-bold">Este é o capital que sua empresa está financiando para a concorrência todos os meses</span>
-                      <br />
-                      Da um olhada nos números aqui embaixo e entenda melhor quanto dinheiro já poderia estar no seu bolso.
-                    </p>
-                  </div>
-                  <div className="text-5xl">🚨</div>
-                </div>
-              </div>
-            </div>
 
             {/* TIMELINE (CUSTO DA INAÇÃO) */}
             <div className="mb-12">
@@ -1013,7 +1056,7 @@ const salvarLead = async (payload: any) => {
                 <div className="bg-[#0a0f0d] p-4 rounded-xl border border-[#7ef542]/50 text-center relative overflow-hidden">
                   <div className="absolute top-0 right-0 bg-[#7ef542] w-8 h-8 blur-xl opacity-20"></div>
                   <div className="flex justify-center items-center gap-1 mb-2 text-[#7ef542] text-xs font-bold">
-                    <Clock className="w-3 h-3" /> Em 1 Ano (LTV): A fortuna acumulada que você escolheu não receber.
+                    <Clock className="w-3 h-3" /> Em 1 Ano: A fortuna acumulada que você escolheu não receber.
                   </div>
                   <p className="text-3xl font-bold text-[#7ef542]">{formatResultCurrency(resultados.projecao.ano1)}</p>
                 </div>
