@@ -192,8 +192,20 @@ export default function Page() {
   }
 
   // --- LÓGICA PRINCIPAL DE CÁLCULO ---
+const salvarLead = async (payload: any) => {
+  const res = await fetch("/api/leads", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  })
 
-  const calcular = () => {
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}))
+    console.error("Erro ao salvar lead:", data)
+  }
+}
+
+  const calcular = async () => {
     if (!nomeLead.trim() || !whatsapp.trim()) {
       alert("Por favor, preencha os campos obrigatórios: Nome e WhatsApp.")
       return
@@ -288,6 +300,52 @@ export default function Page() {
     const recuperacao10 = oportunidadePerdidaTotal * 0.1
     const recuperacao20 = oportunidadePerdidaTotal * 0.2
     const recuperacao34 = oportunidadePerdidaTotal * 0.34
+const aumentoPercentual = fat > 0 ? (oportunidadePerdidaTotal / fat) * 100 : null
+
+await salvarLead({
+  nome: nomeLead,
+  whatsapp,
+
+  produto_nome: nomeProduto || null,
+  produto_tipo: tipoProduto || null,
+  nicho: nicho || null,
+
+  faturamento_mensal: fat,
+  ticket_medio: ticket,
+
+  vendas_realizadas: modoDetalhado ? vendas : null,
+  taxa_conversao_declarada: modoDetalhado ? taxaAtual : null,
+  investimento_trafego: modoDetalhado ? investimentoAd : null,
+
+  tem_upsell: temUpsell,
+  valor_upsell: temUpsell ? (valorUpsell ? parseCurrency(valorUpsell) : null) : null,
+
+  tem_downsell: temDownsell,
+  valor_downsell: temDownsell ? (valorDownsell ? parseCurrency(valorDownsell) : null) : null,
+
+  oportunidade_perdida_total: oportunidadePerdidaTotal,
+  perda_principal: perdaPrincipal,
+  perda_upsell_potencial: perdaUpsellPotencial,
+  perda_downsell_potencial: perdaDownsellPotencial,
+
+  status_saude: status,
+  ineficiencia_tecnica: ineficiencia,
+  desperdicio_trafego: desperdicio,
+  projecao_anual_ltv: perdaLTV,
+
+  // se você criou essas colunas no Supabase:
+  aumento_percentual: aumentoPercentual,
+  projecao_3m: oportunidadePerdidaTotal * 3,
+  projecao_6m: oportunidadePerdidaTotal * 6,
+
+  ganho_mensal_10: recuperacao10,
+  ganho_mensal_20: recuperacao20,
+  ganho_mensal_34: recuperacao34,
+
+  ganho_anual_10: recuperacao10 * 12,
+  ganho_anual_20: recuperacao20 * 12,
+  ganho_anual_34: recuperacao34 * 12,
+})
 
     setResultados({
       faturamento: fat,
