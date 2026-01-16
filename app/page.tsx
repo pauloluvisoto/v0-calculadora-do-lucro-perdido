@@ -53,6 +53,7 @@ export default function Page() {
     faturamento: number
     ticketMedio: number
     vendas: number
+    investimentoTrafego: number
     
     // Breakdown das perdas
     perdaPrincipal: number
@@ -354,6 +355,7 @@ if (taxaAtual < benchmarkIdeal) {
   setResultados({
     faturamento: fat,
     ticketMedio: ticket,
+    investimentoTrafego: investimentoAd,
     vendas: vendas,
     perdaPrincipal: perdaPrincipal,
     perdaUpsellPotencial: perdaUpsellPotencial,
@@ -470,7 +472,7 @@ if (taxaAtual < benchmarkIdeal) {
   const PedagioCard = () => {
     if (!resultados || resultados.desperdicioTrafego <= 0) return null
 
-    const investimento = parseCurrency(investimentoTrafego)
+    const investimento = resultados.investimentoTrafego
     const vendasCount = resultados.vendas > 0 ? resultados.vendas : 1
 
     const cpaAtual = investimento > 0 ? investimento / vendasCount : 0
