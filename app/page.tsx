@@ -283,10 +283,11 @@ const salvarLead = async (payload: any) => {
   let ineficiencia = 0
 
   if (investimentoAd > 0) {
-    const benchmarkIdeal = 50
-    if (taxaAtual < benchmarkIdeal) {
-      ineficiencia = ((benchmarkIdeal - taxaAtual) / benchmarkIdeal) * 100
-      desperdicio = investimentoAd * (ineficiencia / 100)
+    const benchmarkIdeal = getBenchmarkIdeal(ticket)
+
+if (taxaAtual < benchmarkIdeal) {
+  ineficiencia = ((benchmarkIdeal - taxaAtual) / benchmarkIdeal) * 100
+  desperdicio = investimentoAd * (ineficiencia / 100)
     }
   }
 
@@ -415,10 +416,197 @@ const salvarLead = async (payload: any) => {
       calcular()
     }
   }
+  const getBenchmarkIdeal = (ticket: number) => {
+  // tickets em R$
+  if (ticket <= 297) return 45
+  if (ticket <= 497) return 42
+  if (ticket <= 1000) return 38
+  return 35 // fallback caso alguém use acima de 1000
+}
+
+  const calLink = "https://app.cal.com/recupera.ia/30min?user=recupera.ia&overlayCalendar=true"
+
+  const scrollToId = (id: string) => {
+    if (typeof window === "undefined") return
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" })
+  }
+
+  const StickyCTA = () => {
+    if (!resultados) return null
+
+    return (
+      <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-[#1a2520] bg-[#0a0f0d]/90 backdrop-blur">
+        <div className="max-w-6xl mx-auto px-4 py-3 flex flex-col md:flex-row items-center justify-between gap-3">
+          <div className="text-center md:text-left">
+            <p className="text-[11px] text-gray-400">Dinheiro recuperável por mês (cenário 10%)</p>
+            <p className="text-lg md:text-xl font-extrabold text-[#7ef542] leading-none">
+              +{formatResultCurrency(resultados.recuperacao10.mensal)}
+            </p>
+          </div>
+
+          <div className="flex gap-2 w-full md:w-auto">
+            <button
+              onClick={() => scrollToId("recuperacao")}
+              className="flex-1 md:flex-none px-4 py-3 rounded-lg border border-[#1a2520] text-sm text-gray-200 hover:text-white hover:border-[#2a3530] transition"
+            >
+              Ver cenários
+            </button>
+
+            <a
+              href={calLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 md:flex-none px-5 py-3 rounded-lg bg-[#7ef542] text-[#0a0f0d] font-extrabold text-sm text-center hover:bg-[#6ee032] transition"
+            >
+              Agendar com risco zero
+            </a>
+          </div>
+        </div>
+        {resultados && <StickyCTA />}
+      </div>
+    )
+  }
+
+  const PedagioCard = () => {
+    if (!resultados || resultados.desperdicioTrafego <= 0) return null
+
+    const investimento = parseCurrency(investimentoTrafego)
+    const vendasCount = resultados.vendas > 0 ? resultados.vendas : 1
+
+    const cpaAtual = investimento > 0 ? investimento / vendasCount : 0
+    const desperdicioPorVenda = resultados.desperdicioTrafego / vendasCount
+    const cpaEficienteEst = investimento > 0 ? (investimento - resultados.desperdicioTrafego) / vendasCount : 0
+
+    const pctPedagio = Math.min(Math.max(resultados.ineficienciaTrafego, 0), 100)
+    const pctEficiente = Math.max(100 - pctPedagio, 0)
+
+    const benchmarkIdeal = getBenchmarkIdeal(resultados.ticketMedio)
+const vezesMais = resultados.taxaConversaoAtual > 0 ? benchmarkIdeal / resultados.taxaConversaoAtual : 0
+
+
+
+    const rEficiente = Math.round(pctEficiente)
+    const rPedagio = Math.round(pctPedagio)
+
+    return (
+      <div
+        id="pedagio"
+        className="mt-6 bg-gradient-to-br from-red-900/25 to-black/30 border border-red-500/30 p-6 md:p-8 rounded-2xl w-full"
+      >
+        {/* Header */}
+        <div className="flex items-start justify-between gap-4 mb-5">
+          <div>
+            <div className="flex items-center gap-2 text-red-200 font-extrabold">
+              <Target className="w-5 h-5" />
+              <span className="uppercase tracking-wide text-sm">
+  Pedágio do Checkout (benchmark {benchmarkIdeal}%)
+</span>
+
+            </div>
+            <p className="text-xs text-gray-300 mt-1">
+              Você paga tráfego para levar gente até a porta… mas a porta está pesada.
+            </p>
+          </div>
+
+          <div className="text-right">
+            <p className="text-[11px] text-gray-400">pedágio pago este mês</p>
+            <p className="text-3xl md:text-4xl font-extrabold text-red-200 leading-none">
+              {formatResultCurrency(resultados.desperdicioTrafego)}
+            </p>
+          </div>
+        </div>
+
+        {/* Barra R$ 100 */}
+        <div className="bg-black/30 border border-gray-800 rounded-xl p-4 mb-6">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-sm text-white font-semibold">De cada R$ 100 em mídia:</p>
+            <span className="text-xs text-gray-400">
+              Ineficiência: <span className="text-red-200 font-bold">{pctPedagio.toFixed(1).replace(".", ",")}%</span>
+            </span>
+          </div>
+
+          <div className="w-full h-3 rounded-full overflow-hidden bg-gray-800 flex">
+            <div className="h-full bg-[#7ef542]" style={{ width: `${pctEficiente}%` }} />
+            <div className="h-full bg-red-500" style={{ width: `${pctPedagio}%` }} />
+          </div>
+
+          <div className="flex items-center justify-between mt-3 text-xs">
+            <div className="flex items-center gap-2">
+              <span className="inline-block w-2 h-2 rounded-full bg-[#7ef542]" />
+              <span className="text-gray-200">
+                <strong className="text-white">R$ {rEficiente}</strong> geram venda
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="inline-block w-2 h-2 rounded-full bg-red-500" />
+              <span className="text-gray-200">
+                <strong className="text-red-200">R$ {rPedagio}</strong> viram pedágio
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* 3 Mini-cards */}
+        <div className="grid md:grid-cols-3 gap-3 mb-6">
+          <div className="bg-black/30 border border-gray-800 rounded-xl p-4">
+            <p className="text-[11px] text-gray-400 uppercase tracking-wide">CPA médio atual</p>
+            <p className="text-xl font-extrabold text-white">{formatResultCurrency(cpaAtual)}</p>
+            <p className="text-[11px] text-gray-500 mt-1">quanto custa, em média, cada venda hoje</p>
+          </div>
+
+          <div className="bg-black/30 border border-red-500/30 rounded-xl p-4">
+            <p className="text-[11px] text-red-200 uppercase tracking-wide">Pedágio por venda</p>
+            <p className="text-xl font-extrabold text-red-200">{formatResultCurrency(desperdicioPorVenda)}</p>
+            <p className="text-[11px] text-gray-500 mt-1">parte do CPA que some na fricção do checkout</p>
+          </div>
+
+          <div className="bg-black/30 border border-[#7ef542]/25 rounded-xl p-4">
+            <p className="text-[11px] text-[#b6ff8f] uppercase tracking-wide">Custo eficiente estimado</p>
+            <p className="text-xl font-extrabold text-[#7ef542]">{formatResultCurrency(cpaEficienteEst)}</p>
+            <p className="text-[11px] text-gray-500 mt-1">se o checkout estivesse no patamar ideal</p>
+          </div>
+        </div>
+
+        {/* Texto impactante */}
+        <div className="bg-black/40 p-5 rounded-xl border-l-4 border-red-500">
+          <p className="text-sm text-gray-200 leading-relaxed">
+            <span className="text-white font-bold">{nomeLead}</span>, sua ineficiência técnica de{" "}
+            <span className="text-red-200 font-extrabold">{pctPedagio.toFixed(1).replace(".", ",")}%</span> é um{" "}
+            <span className="text-red-200 font-bold">imposto invisível</span> sobre a mídia.
+            <br />
+            Na prática, você precisa de{" "}
+            <span className="text-white font-bold">{vezesMais.toFixed(1).replace(".", ",")}x</span> mais tráfego para
+            fazer a mesma venda que um checkout saudável faria com 1x.
+            <br />
+            <br />
+            <span className="text-red-100 font-extrabold">Veredito:</span> dos{" "}
+            <span className="text-white font-bold">{formatResultCurrency(investimento)}</span> investidos este mês,{" "}
+            <span className="text-red-200 font-extrabold">{formatResultCurrency(resultados.desperdicioTrafego)}</span>{" "}
+            foram pagos como “pedágio”.
+          </p>
+
+          <div className="mt-4 flex flex-col md:flex-row gap-2">
+            <button
+              onClick={() => scrollToId("cta-final")}
+              className="px-4 py-3 rounded-lg border border-red-500/30 text-red-100 font-bold hover:bg-red-500/10 transition"
+            >
+              Quero estancar esse pedágio
+            </button>
+            <button
+              onClick={() => scrollToId("recuperacao")}
+              className="px-4 py-3 rounded-lg border border-[#1a2520] text-gray-200 font-bold hover:border-[#2a3530] transition"
+            >
+              Ver quanto dá pra recuperar
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-[#0a0f0d] text-white">
-      <div className="max-w-6xl mx-auto px-6 py-12">
+      <div className={`max-w-6xl mx-auto px-6 py-12 ${resultados ? "pb-32" : ""}`}>
         <header className="text-center mb-12">
           <div className="flex justify-center mb-6">
             <div className="h-16 md:h-24 flex items-center">
@@ -756,7 +944,61 @@ const salvarLead = async (payload: any) => {
         {/* --- RESULTADOS --- */}
         {resultados && (
           <div ref={resultadosRef} className="space-y-8">
-            
+          
+            {/* RESUMO EXECUTIVO + NAVEGAÇÃO RÁPIDA */}
+    <div className="bg-[#111816] rounded-2xl p-6 border border-[#1a2520]">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div>
+          <p className="text-xs text-gray-400 uppercase tracking-wide">Resumo do mês</p>
+          <h3 className="text-xl font-extrabold text-white">
+            Você está deixando <span className="text-[#7ef542]">{formatResultCurrency(resultados.oportunidadePerdidaTotal)}</span> no caixa
+          </h3>
+          <p className="text-xs text-gray-400 mt-1">(produto principal + ecossistema conforme marcado)</p>
+        </div>
+
+        <div className="flex flex-wrap gap-2 w-full md:w-auto">
+          <button
+            onClick={() => scrollToId("pedagio")}
+            className="flex-1 md:flex-none px-4 py-2 rounded-lg border border-red-500/30 text-red-100 text-sm font-bold hover:bg-red-500/10 transition"
+          >
+            Ver Pedágio
+          </button>
+          <button
+            onClick={() => scrollToId("recuperacao")}
+            className="flex-1 md:flex-none px-4 py-2 rounded-lg border border-[#1a2520] text-gray-200 text-sm font-bold hover:border-[#2a3530] transition"
+          >
+            Ver Recuperação
+          </button>
+          <a
+            href={calLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex-1 md:flex-none px-4 py-2 rounded-lg bg-[#7ef542] text-[#0a0f0d] text-sm font-extrabold text-center hover:bg-[#6ee032] transition"
+          >
+            Agendar
+          </a>
+        </div>
+      </div>
+
+      <div className="grid md:grid-cols-4 gap-3 mt-5">
+        <div className="bg-[#0a0f0d] border border-[#1a2520] rounded-xl p-4">
+          <p className="text-[11px] text-gray-500 uppercase tracking-wide">Conversão</p>
+          <p className="text-lg font-extrabold text-white">{resultados.taxaConversaoAtual.toFixed(2).replace(".", ",")}%</p>
+        </div>
+        <div className="bg-[#0a0f0d] border border-[#1a2520] rounded-xl p-4">
+          <p className="text-[11px] text-gray-500 uppercase tracking-wide">Vendas</p>
+          <p className="text-lg font-extrabold text-white">{formatNumber(resultados.vendas)}</p>
+        </div>
+        <div className="bg-[#0a0f0d] border border-[#1a2520] rounded-xl p-4">
+          <p className="text-[11px] text-gray-500 uppercase tracking-wide">Abandonos</p>
+          <p className="text-lg font-extrabold text-red-200">{formatNumber(resultados.carrinhosAbandonados)}</p>
+        </div>
+        <div className="bg-[#0a0f0d] border border-[#1a2520] rounded-xl p-4">
+          <p className="text-[11px] text-gray-500 uppercase tracking-wide">Recuperável (10%)</p>
+          <p className="text-lg font-extrabold text-[#7ef542]">+{formatResultCurrency(resultados.recuperacao10.mensal)}</p>
+        </div>
+      </div>
+    </div>
             {/* 1. Diagnóstico de Saúde (CARD 1 - Com a Explicação de Tráfego) */}
             <div className="bg-[#111816] rounded-2xl p-8 border border-[#1a2520]">
               <div className="flex items-center gap-3 mb-6 justify-center md:justify-start">
@@ -806,8 +1048,10 @@ const salvarLead = async (payload: any) => {
                     {modoDetalhado ? (
                       <p>
                         Com sua taxa atual de {resultados.taxaConversaoAtual}%, você precisou de aprox.{" "}
-                        <span className="text-white font-bold">{formatNumber(resultados.totalVisitasEstimadas)} visitas</span> para gerar <span className="text-[#7ef542] font-bold">{resultados.vendas} vendas.</span>
-                        Isso significa que <span className="text-red-400 font-bold">{formatNumber(resultados.carrinhosAbandonados)} pessoas</span> chegaram ao pagamento e desistiram.
+                        <span className="text-white font-bold">{formatNumber(resultados.totalVisitasEstimadas)} visitas</span> para gerar <span className="text-[#7ef542] font-bold">{resultados.vendas} vendas.
+                        </span>
+                        
+                         Isso significa que <span className="text-red-400 font-bold">{formatNumber(resultados.carrinhosAbandonados)} pessoas</span> chegaram ao pagamento e desistiram.
                       </p>
                     ) : (
                       <p>
@@ -825,15 +1069,16 @@ const salvarLead = async (payload: any) => {
   <div className="flex flex-col-reverse md:flex-row items-center justify-between gap-6">
     <div className="text-center md:text-left w-full">
       <p className="text-sm text-gray-400 uppercase tracking-wide mb-1">
-        Possibilidade de Faturamento Perdida Mensalmente
-      </p>
+  Lucro perdido no checkout (dinheiro que não entrou no seu caixa)
+</p>
 
       <h2 className="text-4xl md:text-5xl font-bold text-[#7ef542] mb-2">
         {formatResultCurrency(resultados.oportunidadePerdidaTotal)}
       </h2>
 
       <p className="text-sm text-white max-w-lg mb-4">
-        Considerando sua taxa atual, este é o valor que sua operação deixou de faturar este mês por ineficiência no checkout e funil.
+        Considerando sua taxa atual, este é o valor que sua operação deixou de colocar no caixa este mês por fricção no checkout e no funil.
+
       </p>
 
       <div className="bg-[#0a0f0d] p-4 rounded-lg border border-gray-800 text-xs text-gray-400 mt-4 mb-4">
@@ -927,107 +1172,8 @@ const salvarLead = async (payload: any) => {
         </div>
       </div>
 
-      {resultados.desperdicioTrafego > 0 && (() => {
-        const investimento = parseCurrency(investimentoTrafego)
-        const vendasCount = resultados.vendas > 0 ? resultados.vendas : 1
+      <PedagioCard />
 
-        const cpaAtual = investimento > 0 ? investimento / vendasCount : 0
-        const desperdicioPorVenda = resultados.desperdicioTrafego / vendasCount
-        const cpaEficienteEst = investimento > 0 ? (investimento - resultados.desperdicioTrafego) / vendasCount : 0
-
-        const pctPedagio = Math.min(Math.max(resultados.ineficienciaTrafego, 0), 100)
-        const pctEficiente = Math.max(100 - pctPedagio, 0)
-
-        const vezesMais = resultados.taxaConversaoAtual > 0 ? (50 / resultados.taxaConversaoAtual) : 0
-
-        return (
-          <div className="mt-6 bg-gradient-to-br from-red-900/25 to-black/30 border border-red-500/30 p-6 md:p-8 rounded-2xl w-full">
-            <div className="flex items-start justify-between gap-4 mb-5">
-              <div>
-                <div className="flex items-center gap-2 text-red-300 font-bold">
-                  <Target className="w-5 h-5" />
-                  <span className="uppercase tracking-wide text-sm">Pedágio do Checkout (CPA Inflacionado)</span>
-                </div>
-                <p className="text-xs text-gray-300 mt-1">
-                  Você está pagando tráfego para levar gente até a porta… mas a porta está pesada.
-                </p>
-              </div>
-
-              <div className="text-right">
-                <p className="text-[11px] text-gray-400">desperdício este mês</p>
-                <p className="text-3xl md:text-4xl font-extrabold text-red-300 leading-none">
-                  {formatResultCurrency(resultados.desperdicioTrafego)}
-                </p>
-              </div>
-            </div>
-
-            <div className="bg-black/30 border border-gray-800 rounded-xl p-4 mb-6">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-sm text-white font-semibold">De cada R$ 100 em mídia:</p>
-                <span className="text-xs text-gray-400">
-                  Ineficiência:{" "}
-                  <span className="text-red-300 font-bold">{pctPedagio.toFixed(1).replace(".", ",")}%</span>
-                </span>
-              </div>
-
-              <div className="w-full h-3 rounded-full overflow-hidden bg-gray-800 flex">
-                <div className="h-full bg-[#7ef542]" style={{ width: `${pctEficiente}%` }} />
-                <div className="h-full bg-red-500" style={{ width: `${pctPedagio}%` }} />
-              </div>
-
-              <div className="flex items-center justify-between mt-3 text-xs">
-                <div className="flex items-center gap-2">
-                  <span className="inline-block w-2 h-2 rounded-full bg-[#7ef542]" />
-                  <span className="text-gray-200">
-                    <strong className="text-white">R$ {pctEficiente.toFixed(0)}</strong> geram venda
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="inline-block w-2 h-2 rounded-full bg-red-500" />
-                  <span className="text-gray-200">
-                    <strong className="text-red-300">R$ {pctPedagio.toFixed(0)}</strong> viram “pedágio”
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div className="grid md:grid-cols-3 gap-3 mb-6">
-              <div className="bg-black/30 border border-gray-800 rounded-xl p-4">
-                <p className="text-[11px] text-gray-400 uppercase tracking-wide">CPA médio atual</p>
-                <p className="text-xl font-bold text-white">{formatResultCurrency(cpaAtual)}</p>
-              </div>
-
-              <div className="bg-black/30 border border-red-500/30 rounded-xl p-4">
-                <p className="text-[11px] text-red-200 uppercase tracking-wide">Pedágio por venda</p>
-                <p className="text-xl font-bold text-red-300">{formatResultCurrency(desperdicioPorVenda)}</p>
-              </div>
-
-              <div className="bg-black/30 border border-[#7ef542]/25 rounded-xl p-4">
-                <p className="text-[11px] text-[#b6ff8f] uppercase tracking-wide">Custo eficiente estimado</p>
-                <p className="text-xl font-bold text-[#7ef542]">{formatResultCurrency(cpaEficienteEst)}</p>
-              </div>
-            </div>
-
-            <div className="bg-black/40 p-5 rounded-xl border-l-4 border-red-500">
-              <p className="text-sm text-gray-200 leading-relaxed">
-                <span className="text-white font-bold">{nomeLead}</span>, sua ineficiência técnica de{" "}
-                <span className="text-red-300 font-extrabold">{pctPedagio.toFixed(1).replace(".", ",")}%</span> é um{" "}
-                <span className="text-red-300 font-bold">imposto invisível</span> sobre a mídia.
-                <br />
-                Na prática, você precisa de{" "}
-                <span className="text-white font-bold">{vezesMais.toFixed(1).replace(".", ",")}x</span> mais tráfego para fazer
-                a mesma venda que uma operação com checkout saudável faria com 1x.
-                <br />
-                <br />
-                <span className="text-red-200 font-bold">Veredito:</span> dos{" "}
-                <span className="text-white font-bold">{formatResultCurrency(investimento)}</span> investidos este mês,{" "}
-                <span className="text-red-300 font-extrabold">{formatResultCurrency(resultados.desperdicioTrafego)}</span>{" "}
-                foram pagos como “pedágio”.
-              </p>
-            </div>
-          </div>
-        )
-      })()}
     </div>
 
     <div className="text-6xl">💸</div>
@@ -1071,7 +1217,7 @@ const salvarLead = async (payload: any) => {
               </div>
             </div>
 
-            <div className="grid md:grid-cols-3 gap-6">
+            <div id="recuperacao" className="grid md:grid-cols-3 gap-6">
               {/* Card 10% */}
               <div className="bg-[#111816] rounded-2xl p-6 border border-[#1a2520] hover:border-[#2a3530] transition-colors">
                 <div className="mb-4">
@@ -1400,7 +1546,7 @@ const salvarLead = async (payload: any) => {
             </div>
 
             {/* CTA Final */}
-            <div className="mt-12 bg-[#111816] rounded-2xl p-8 border border-[#1a2520]">
+            <div id="cta-final" className="mt-12 bg-[#111816] rounded-2xl p-8 border border-[#1a2520]">
               <div className="text-center mb-8">
                 <h3 className="text-xl md:text-3xl font-bold leading-tight">
                   {renderDynamicHeadline(nomeLead, "e se eu dissesse que você também pode ter esse resultado?")}
