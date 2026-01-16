@@ -19,8 +19,7 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   AlertOctagon,
-  Wallet,
-  Info
+  Wallet
 } from "lucide-react"
 
 export default function Page() {
@@ -81,6 +80,10 @@ export default function Page() {
     // Dados para os cards
     cenarioUpsell: "sim" | "nao"
     cenarioDownsell: "sim" | "nao"
+    
+    // Para explicação da estimativa
+    baseUpsellEstimada: number
+    baseDownsellEstimada: number
   } | null>(null)
 
   const resultadosRef = useRef<HTMLDivElement>(null)
@@ -163,10 +166,20 @@ export default function Page() {
   }
 
   const handleTaxaConversaoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/[^\d.,]/g, "")
-    const floatVal = Number.parseFloat(value.replace(",", "."))
-    if (floatVal > 100) return
-    setTaxaConversao(value)
+    const value = e.target.value.replace(/[^\d]/g, "")
+    if (!value) {
+      setTaxaConversao("")
+      return
+    }
+    const floatValue = Number(value) / 100
+    if (floatValue > 100) return 
+
+    const formatted = new Intl.NumberFormat("pt-BR", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(floatValue)
+    
+    setTaxaConversao(formatted)
   }
 
   const calcularCampoAutomatico = () => {
@@ -193,24 +206,9 @@ export default function Page() {
   }
 
   // --- LÓGICA PRINCIPAL DE CÁLCULO ---
-  const salvarLead = async (payload: any) => {
-    try {
-      const res = await fetch("/api/leads", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      })
 
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}))
-        console.error("Falha ao salvar lead:", err)
-      }
-    } catch (e) {
-      console.error("Erro ao chamar /api/leads:", e)
-    }
-  }
-
-    const calcular = () => {
+  const calcular = () => {
+    // Validações Básicas
     if (!nomeLead.trim() || !whatsapp.trim()) {
       alert("Por favor, preencha os campos obrigatórios: Nome e WhatsApp.")
       return
@@ -222,6 +220,26 @@ export default function Page() {
     if (fat <= 0 || ticket <= 0) {
       alert("Preencha faturamento e ticket corretamente.")
       return
+    }
+
+    // Validações Específicas do Modo Detalhado
+    if (modoDetalhado) {
+        if (!taxaConversao) {
+            alert("Por favor, preencha a Taxa de Conversão.")
+            return
+        }
+        if (!investimentoTrafego) {
+            alert("Por favor, preencha o Investimento em Tráfego.")
+            return
+        }
+        if (temUpsell && !valorUpsell) {
+            alert("Por favor, preencha o Valor do Upsell.")
+            return
+        }
+        if (temDownsell && !valorDownsell) {
+             alert("Por favor, preencha o Valor do Downsell.")
+             return
+        }
     }
 
     let vendas: number
@@ -251,8 +269,8 @@ export default function Page() {
     } else {
       // Modo Simplificado: Estimativas de Mercado
       vendas = Math.round(fat / ticket)
-      carrinhosAband = vendas * 3
-      taxaAtual = 25
+      carrinhosAband = vendas * 3 
+      taxaAtual = 25 
       visitasEstimadas = vendas * 4
     }
 
@@ -262,16 +280,23 @@ export default function Page() {
     // 3. Cálculo de Perda de Ecossistema (Upsell/Downsell)
     let valUpsell = 0
     let valDownsell = 0
-
+    
     if (valorUpsell) valUpsell = parseCurrency(valorUpsell)
     if (valorDownsell) valDownsell = parseCurrency(valorDownsell)
 
-    const upsellBase = valUpsell > 0 ? valUpsell : ticket * 1.5
-    const downsellBase = valDownsell > 0 ? valDownsell : ticket * 0.3
+    // Base de cálculo para Potencial:
+    // Se tem valor, usa o valor. Se não tem, usa estimativa (150% do ticket para up, 30% para down).
+    const upsellBase = (valUpsell > 0) ? valUpsell : (ticket * 1.5) 
+    const downsellBase = (valDownsell > 0) ? valDownsell : (ticket * 0.3)
 
-    const perdaUpsellPotencial = carrinhosAband * 0.2 * upsellBase
-    const perdaDownsellPotencial = carrinhosAband * 0.1 * downsellBase
+    // CÁLCULO DOS POTENCIAIS (Exibidos nos cards verdes ou vermelhos)
+    // Upsell: 20% de conversão sobre os recuperados (carrinhosAband)
+    const perdaUpsellPotencial = carrinhosAband * 0.20 * upsellBase
+    
+    // Downsell: 10% de conversão sobre os perdidos (carrinhosAband)
+    const perdaDownsellPotencial = carrinhosAband * 0.10 * downsellBase
 
+    // SOMA REAL (Só soma no total grande se tiver marcado SIM)
     let oportunidadePerdidaTotal = perdaPrincipal
     if (temUpsell) oportunidadePerdidaTotal += perdaUpsellPotencial
     if (temDownsell) oportunidadePerdidaTotal += perdaDownsellPotencial
@@ -281,7 +306,7 @@ export default function Page() {
     let ineficiencia = 0
 
     if (investimentoAd > 0) {
-      const benchmarkIdeal = 50
+      const benchmarkIdeal = 50 
       if (taxaAtual < benchmarkIdeal) {
         ineficiencia = ((benchmarkIdeal - taxaAtual) / benchmarkIdeal) * 100
         desperdicio = investimentoAd * (ineficiencia / 100)
@@ -297,77 +322,18 @@ export default function Page() {
     const recuperacao10 = oportunidadePerdidaTotal * 0.1
     const recuperacao20 = oportunidadePerdidaTotal * 0.2
     const recuperacao34 = oportunidadePerdidaTotal * 0.34
-    const aumentoPercentual = fat > 0 ? (oportunidadePerdidaTotal / fat) * 100 : null
-
-const projecao3m = oportunidadePerdidaTotal * 3
-const projecao6m = oportunidadePerdidaTotal * 6
-
-const ganhoMensal10 = recuperacao10
-const ganhoMensal20 = recuperacao20
-const ganhoMensal34 = recuperacao34
-
-const ganhoAnual10 = recuperacao10 * 12
-const ganhoAnual20 = recuperacao20 * 12
-const ganhoAnual34 = recuperacao34 * 12
-
-
-    // ✅ AQUI “LIGA” O FORM: salva no backend (/api/leads)
-    // (sem travar a tela; se falhar, só loga no console)
-    salvarLead({
-  // inputs (ok)
-  nome: nomeLead,
-  whatsapp,
-  produto_nome: nomeProduto,
-  produto_tipo: tipoProduto,
-  nicho,
-  faturamento_mensal: fat,
-  ticket_medio: ticket,
-  vendas_realizadas: modoDetalhado ? Number(vendasRealizadas || 0) : null,
-  taxa_conversao_declarada: modoDetalhado ? Number.parseFloat(taxaConversao.replace(",", ".")) : null,
-  investimento_trafego: investimentoAd || null,
-  tem_upsell: temUpsell,
-  valor_upsell: temUpsell ? parseCurrency(valorUpsell) : null,
-
-  // faltantes (schema)
-  tem_downsell: temDownsell,
-  valor_downsell: temDownsell ? parseCurrency(valorDownsell) : null,
-
-  oportunidade_perdida_total: oportunidadePerdidaTotal,
-  perda_principal: perdaPrincipal,
-  perda_upsell_potencial: perdaUpsellPotencial,
-  perda_downsell_potencial: perdaDownsellPotencial,
-
-  status_saude: status,
-  ineficiencia_tecnica: ineficiencia,
-  desperdicio_trafego: desperdicio,
-
-aumento_percentual: aumentoPercentual,
-
-projecao_3m: projecao3m,
-  projecao_6m: projecao6m,
-  projecao_anual_ltv: perdaLTV,
-
-  ganho_mensal_10: ganhoMensal10,
-  ganho_mensal_20: ganhoMensal20,
-  ganho_mensal_34: ganhoMensal34,
-
-  ganho_anual_10: ganhoAnual10,
-  ganho_anual_20: ganhoAnual20,
-  ganho_anual_34: ganhoAnual34,
-})
-
 
     setResultados({
       faturamento: fat,
       ticketMedio: ticket,
       vendas: vendas,
-
       perdaPrincipal: perdaPrincipal,
-      perdaUpsellPotencial: perdaUpsellPotencial,
+      
+      perdaUpsellPotencial: perdaUpsellPotencial, 
       perdaDownsellPotencial: perdaDownsellPotencial,
 
-      oportunidadePerdidaTotal: oportunidadePerdidaTotal,
-
+      oportunidadePerdidaTotal: oportunidadePerdidaTotal, 
+      
       taxaConversaoAtual: taxaAtual,
       statusSaude: status,
       desperdicioTrafego: desperdicio,
@@ -383,16 +349,17 @@ projecao_3m: projecao3m,
       recuperacao20: { mensal: recuperacao20, anual: recuperacao20 * 12 },
       recuperacao34: { mensal: recuperacao34, anual: recuperacao34 * 12 },
       carrinhosAbandonados: carrinhosAband,
-
+      
       cenarioUpsell: temUpsell ? "sim" : "nao",
       cenarioDownsell: temDownsell ? "sim" : "nao",
+      baseUpsellEstimada: upsellBase,
+      baseDownsellEstimada: downsellBase
     })
 
     setTimeout(() => {
       resultadosRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
     }, 100)
   }
-
 
   // --- HELPERS DE EXIBIÇÃO ---
 
@@ -540,9 +507,12 @@ projecao_3m: projecao3m,
               <>
                 <div>
                   <label className="flex items-center justify-center md:justify-start gap-2 text-[#7ef542] text-sm mb-2">
-                    <Percent className="w-4 h-4" /> Taxa de Conversão Checkout (%)
+                    <Percent className="w-4 h-4" /> Taxa de Conversão Checkout (%) <span className="text-red-500">*</span>
                   </label>
-                  <input type="text" value={taxaConversao} onChange={handleTaxaConversaoChange} onKeyPress={handleKeyPress} placeholder="Ex: 15,00%" className="w-full bg-[#0a0f0d] border border-[#1a2520] rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#7ef542] transition-colors text-center md:text-left" />
+                  <div className="relative">
+                    <input type="text" value={taxaConversao} onChange={handleTaxaConversaoChange} onKeyPress={handleKeyPress} placeholder="Ex: 15,00" className="w-full bg-[#0a0f0d] border border-[#1a2520] rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#7ef542] transition-colors text-center md:text-left" />
+                     <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500">%</span>
+                  </div>
                   <p className="text-[10px] text-gray-500 mt-1 text-center md:text-left">
                     Consulte o dashboard da sua plataforma (Hotmart/Kiwify).
                   </p>
@@ -585,6 +555,7 @@ projecao_3m: projecao3m,
                             placeholder="Valor do Upsell" 
                             className="w-full bg-[#0a0f0d] border border-[#1a2520] rounded-lg px-4 pl-10 py-2 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-[#7ef542] transition-colors" 
                          />
+                         <span className="absolute right-4 top-1/2 -translate-y-1/2 text-red-500 text-xs font-bold">*</span>
                       </div>
                     )}
                 </div>
@@ -592,11 +563,11 @@ projecao_3m: projecao3m,
                 {/* Linha 6: Tráfego e Downsell */}
                 <div>
                   <label className="flex items-center justify-center md:justify-start gap-2 text-[#7ef542] text-sm mb-2">
-                    <Target className="w-4 h-4" /> Investimento em Tráfego (Mensal)
+                    <Target className="w-4 h-4" /> Investimento em Tráfego (Mensal) <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">R$</span>
-                    <input type="text" value={investimentoTrafego} onChange={handleMonetaryChange(setInvestimentoTrafego)} placeholder="10.000,00 (Opcional)" className="w-full bg-[#0a0f0d] border border-[#1a2520] rounded-lg px-4 pl-12 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#7ef542] transition-colors text-center md:text-left" />
+                    <input type="text" value={investimentoTrafego} onChange={handleMonetaryChange(setInvestimentoTrafego)} placeholder="10.000,00" className="w-full bg-[#0a0f0d] border border-[#1a2520] rounded-lg px-4 pl-12 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#7ef542] transition-colors text-center md:text-left" />
                   </div>
                 </div>
 
@@ -629,6 +600,7 @@ projecao_3m: projecao3m,
                             placeholder="Valor do Downsell" 
                             className="w-full bg-[#0a0f0d] border border-[#1a2520] rounded-lg px-4 pl-10 py-2 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-[#7ef542] transition-colors" 
                          />
+                         <span className="absolute right-4 top-1/2 -translate-y-1/2 text-red-500 text-xs font-bold">*</span>
                       </div>
                     )}
                 </div>
@@ -817,7 +789,7 @@ projecao_3m: projecao3m,
                       </p>
                     ) : (
                       <p>
-                        Baseado em benchmarks de mercado, estimamos que para cada venda realizada, cerca de 
+                        Baseado em benchmarks de mercado, estimamos que para cada venda realizada, cerca de 
                         <span className="text-red-400 font-bold"> 3 pessoas</span> iniciam o checkout e desistem. Isso gera um volume invisível de leads perdidos.
                       </p>
                     )}
@@ -878,13 +850,16 @@ projecao_3m: projecao3m,
                     {(resultados.cenarioUpsell === "nao" || resultados.cenarioDownsell === "nao") && (
                        <div className="mt-4 pt-3 border-t border-gray-800 text-[10px] text-gray-500 italic space-y-1 text-left">
                           {resultados.cenarioUpsell === "nao" && (
-                            <p><span className="text-red-400">* Upsell:</span> Valor estimado. Se você tivesse essa oferta (150% do ticket), converteria ~20% das vendas recuperadas.</p>
+                            <p><span className="text-red-400">* Upsell:</span> Valor estimado. Se você tivesse essa oferta, converteria ~20% das vendas recuperadas.</p>
                           )}
                           {resultados.cenarioDownsell === "nao" && (
-                            <p><span className="text-red-400">* Downsell:</span> Valor estimado. Se você tivesse essa oferta (30% do ticket), recuperaria ~10% dos leads perdidos.</p>
+                            <p><span className="text-red-400">* Downsell:</span> Valor estimado. Se você tivesse essa oferta, recuperaria ~10% dos leads perdidos.</p>
                           )}
                        </div>
                     )}
+                    <div className="mt-3 pt-3 border-t border-gray-800 text-[10px] text-gray-500 italic text-left">
+                       <p>* Taxas consideradas: 20% conv. para Upsell (sobre vendas) e 10% conv. para Downsell (sobre abandonos).</p>
+                    </div>
                   </div>
 
                   {resultados.desperdicioTrafego > 0 && (
