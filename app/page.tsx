@@ -297,6 +297,19 @@ export default function Page() {
     const recuperacao10 = oportunidadePerdidaTotal * 0.1
     const recuperacao20 = oportunidadePerdidaTotal * 0.2
     const recuperacao34 = oportunidadePerdidaTotal * 0.34
+    const aumentoPercentual = fat > 0 ? (oportunidadePerdidaTotal / fat) * 100 : null
+
+const projecao3m = oportunidadePerdidaTotal * 3
+const projecao6m = oportunidadePerdidaTotal * 6
+
+const ganhoMensal10 = recuperacao10
+const ganhoMensal20 = recuperacao20
+const ganhoMensal34 = recuperacao34
+
+const ganhoAnual10 = recuperacao10 * 12
+const ganhoAnual20 = recuperacao20 * 12
+const ganhoAnual34 = recuperacao34 * 12
+
 
     // ✅ AQUI “LIGA” O FORM: salva no backend (/api/leads)
     // (sem travar a tela; se falhar, só loga no console)
@@ -328,7 +341,19 @@ export default function Page() {
   ineficiencia_tecnica: ineficiencia,
   desperdicio_trafego: desperdicio,
 
+aumento_percentual: aumentoPercentual,
+
+projecao_3m: projecao3m,
+  projecao_6m: projecao6m,
   projecao_anual_ltv: perdaLTV,
+
+  ganho_mensal_10: ganhoMensal10,
+  ganho_mensal_20: ganhoMensal20,
+  ganho_mensal_34: ganhoMensal34,
+
+  ganho_anual_10: ganhoAnual10,
+  ganho_anual_20: ganhoAnual20,
+  ganho_anual_34: ganhoAnual34,
 })
 
 
