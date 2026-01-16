@@ -1,4 +1,4 @@
-"use client"
+value={abandonosCheckout}"use client"
 
 import type React from "react"
 import { useState, useRef, useEffect } from "react"
@@ -34,7 +34,8 @@ export default function Page() {
   const [ticketMedio, setTicketMedio] = useState("")
   const [modoDetalhado, setModoDetalhado] = useState(false)
   const [vendasRealizadas, setVendasRealizadas] = useState("")
-
+  const [abandonosCheckout, setAbandonosCheckout] = useState("")
+  
   // Estados para Features Avançadas
   const [taxaConversao, setTaxaConversao] = useState("")
   const [investimentoTrafego, setInvestimentoTrafego] = useState("")
@@ -174,18 +175,54 @@ export default function Page() {
     if (floatVal > 100) return
     setTaxaConversao(value)
   }
+  
+const getVendasBase = () => {
+  const v = Number(vendasRealizadas) || 0
+  if (v > 0) return v
+
+  const fat = parseCurrency(faturamento)
+  const ticket = parseCurrency(ticketMedio)
+  if (fat > 0 && ticket > 0) return Math.round(fat / ticket)
+
+  return 0
+}
+
+const handleTaxaBlur = () => {
+  const v = getVendasBase()
+  const taxa = Number.parseFloat(taxaConversao.replace(",", "."))
+
+  if (v <= 0 || !taxa || taxa <= 0) return
+
+  const totalCheckout = v / (taxa / 100)
+  const aband = Math.max(Math.round(totalCheckout - v), 0)
+
+  setAbandonosCheckout(String(aband))
+}
+
+const handleAbandonosBlur = () => {
+  const v = getVendasBase()
+  const a = Number(abandonosCheckout) || 0
+
+  if (v <= 0) return
+
+  const total = v + a
+  if (total <= 0) return
+
+  const taxa = (v / total) * 100
+  setTaxaConversao(taxa.toFixed(2).replace(".", ","))
+}
 
   const calcularCampoAutomatico = () => {
     const fat = parseCurrency(faturamento)
     const ticket = parseCurrency(ticketMedio)
     const vendas = Number(vendasRealizadas) || 0
 
-    if (fat > 0 && ticket > 0) {
-      const calculatedVendas = Math.round(fat / ticket)
-      setVendasRealizadas(String(calculatedVendas))
-      setCampoAutoCalculado("vendas")
-      return
-    }
+    if (fat > 0 && ticket > 0 && !vendasRealizadas) {
+  const calculatedVendas = Math.round(fat / ticket)
+  setVendasRealizadas(String(calculatedVendas))
+  setCampoAutoCalculado("vendas")
+  return
+}
 
     if (vendas > 0 && ticket > 0 && fat === 0) {
       const calculatedFat = vendas * ticket
@@ -233,30 +270,51 @@ const salvarLead = async (payload: any) => {
 
   // 1. Definição de Cenário e Dados Base
   let visitasEstimadas = 0
+let vendasInput = 0
+let taxaInput = 0
+let abandonosInput = 0
 
   if (modoDetalhado) {
-    const vendasInput = Number(vendasRealizadas)
-    const taxaInput = Number.parseFloat(taxaConversao.replace(",", "."))
+  vendasInput = Number(vendasRealizadas) || 0
+  abandonosInput = Number(abandonosCheckout) || 0
 
-    if (vendasInput <= 0 || !taxaInput || taxaInput <= 0) {
-      alert("Por favor, preencha o número de vendas e a taxa de conversão corretamente.")
-      return
-    }
+  const taxaParsed = Number.parseFloat(taxaConversao.replace(",", "."))
+  taxaInput = Number.isFinite(taxaParsed) ? taxaParsed : 0
 
-    const totalVisitasCheckout = vendasInput / (taxaInput / 100)
-    const abandonosCalculados = totalVisitasCheckout - vendasInput
+  // vendas: se não informou, estima por faturamento/ticket
+  const vendasEstimadas = Math.round(fat / ticket)
+  vendas = vendasInput > 0 ? vendasInput : vendasEstimadas
 
-    vendas = vendasInput
+  // 1) Se informou abandonos: taxa é calculada
+  if (abandonosInput > 0) {
+    carrinhosAband = abandonosInput
+    const totalCheckout = vendas + carrinhosAband
+    taxaAtual = totalCheckout > 0 ? (vendas / totalCheckout) * 100 : 0
+    visitasEstimadas = totalCheckout
+  }
+  // 2) Se informou taxa: abandonos são calculados
+  else if (taxaInput > 0) {
+    taxaAtual = taxaInput
+    const totalVisitasCheckout = vendas / (taxaAtual / 100)
+    const abandonosCalculados = totalVisitasCheckout - vendas
+
     carrinhosAband = Math.round(abandonosCalculados)
     visitasEstimadas = Math.round(totalVisitasCheckout)
-    taxaAtual = taxaInput
-  } else {
-    // Modo Simplificado: Estimativas de Mercado
-    vendas = Math.round(fat / ticket)
-    carrinhosAband = vendas * 3
+  }
+  // 3) Se não informou nem taxa nem abandonos: fallback benchmark (base da calculadora)
+  else {
     taxaAtual = 25
+    carrinhosAband = vendas * 3
     visitasEstimadas = vendas * 4
   }
+} else {
+  // Modo Simplificado: Estimativas de Mercado (mantém sua concepção base)
+  vendas = Math.round(fat / ticket)
+  carrinhosAband = vendas * 3
+  taxaAtual = 25
+  visitasEstimadas = vendas * 4
+}
+
 
   // ✅ Benchmark por ticket (usado em Pedágio e Saúde)
   const benchmarkIdeal = getBenchmarkIdeal(ticket)
@@ -283,6 +341,18 @@ const fatBase = modoDetalhado ? faturamentoCalculado : fat
 
   if (valorUpsell) valUpsell = parseCurrency(valorUpsell)
   if (valorDownsell) valDownsell = parseCurrency(valorDownsell)
+// Regras obrigatórias: se marcou SIM, precisa informar o valor
+if (modoDetalhado) {
+  if (temUpsell === true && valUpsell <= 0) {
+    alert("Você marcou que TEM Upsell. Por favor, informe o valor do Upsell.")
+    return
+  }
+
+  if (temDownsell === true && valDownsell <= 0) {
+    alert("Você marcou que TEM Downsell. Por favor, informe o valor do Downsell.")
+    return
+  }
+}
 
   // Base de cálculo para Potencial (Se não tiver valor, estima)
   // Upsell = 1.5x do ticket (Mais caro)
@@ -347,8 +417,8 @@ else if (taxaAtual >= limiteExcelente) status = "Excelente"
     nicho: nicho || null,
     faturamento_mensal: fat,
     ticket_medio: ticket,
-    vendas_realizadas: modoDetalhado ? vendas : null,
-    taxa_conversao_declarada: modoDetalhado ? taxaAtual : null,
+    vendas_realizadas: modoDetalhado && vendasInput > 0 ? vendasInput : null,
+    taxa_conversao_declarada: modoDetalhado && taxaInput > 0 ? taxaInput : null,
     investimento_trafego: modoDetalhado ? investimentoAd : null,
     tem_upsell: temUpsell,
     valor_upsell: temUpsell ? (valorUpsell ? parseCurrency(valorUpsell) : null) : null,
@@ -733,8 +803,7 @@ const vezesMais = resultados.taxaConversaoAtual > 0 ? benchmarkIdeal / resultado
               </div>
             </div>
 
-            {/* Linha 4: Nicho e Taxa (Só exibe Taxa se detalhado) */}
-            <div className={!modoDetalhado ? "md:col-span-2" : ""}>
+            <div className="md:col-span-2">
                <label className="flex items-center justify-center md:justify-start gap-2 text-[#7ef542] text-sm mb-2">
                 <Briefcase className="w-4 h-4" /> Nicho de Atuação
               </label>
@@ -745,16 +814,40 @@ const vezesMais = resultados.taxaConversaoAtual > 0 ? benchmarkIdeal / resultado
               <>
                 <div>
                   <label className="flex items-center justify-center md:justify-start gap-2 text-[#7ef542] text-sm mb-2">
-                    <Percent className="w-4 h-4" /> Taxa de Conversão Checkout (%) <span className="text-red-500">*</span>
+                    <Percent className="w-4 h-4" /> Taxa de Conversão Checkout (%)
                   </label>
                   <div className="relative">
-                    <input type="text" value={taxaConversao} onChange={handleTaxaConversaoChange} onKeyPress={handleKeyPress} placeholder="Ex: 15,00%" className="w-full bg-[#0a0f0d] border border-[#1a2520] rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#7ef542] transition-colors text-center md:text-left" />
+                    <input
+  type="text"
+  value={taxaConversao}
+  onChange={handleTaxaConversaoChange}
+  onBlur={handleTaxaBlur}
+  onKeyPress={handleKeyPress} placeholder="Ex: 15,00%" className="w-full bg-[#0a0f0d] border border-[#1a2520] rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#7ef542] transition-colors text-center md:text-left" />
                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500">%</span>
                   </div>
                   <p className="text-[10px] text-gray-500 mt-1 text-center md:text-left">
-                    Consulte o dashboard da sua plataforma (Hotmart/Kiwify).
-                  </p>
+  Opcional. Se você não souber a taxa, preencha o campo de <strong>Abandonos no checkout</strong> logo abaixo.
+</p>
                 </div>
+<div>
+  <label className="flex items-center justify-center md:justify-start gap-2 text-[#7ef542] text-sm mb-2">
+    <AlertTriangle className="w-4 h-4" /> Abandonos no checkout (tentativas sem compra)
+  </label>
+
+  <input
+  type="text"
+  value={abandonosCheckout}
+  onChange={handleNumericChange(setAbandonosCheckout)}
+  onBlur={handleAbandonosBlur}
+  onKeyPress={handleKeyPress}
+    placeholder="Ex: 420"
+    className="w-full bg-[#0a0f0d] border border-[#1a2520] rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#7ef542] transition-colors text-center md:text-left"
+  />
+
+  <p className="text-[10px] text-gray-500 mt-1 text-center md:text-left">
+    Se você não souber a taxa %, informe quantas tentativas <strong>não</strong> viraram compra aprovada (Pix/Boleto não pago, cartão recusado e abandono).
+  </p>
+</div>
 
                 {/* Linha 5: Vendas e Upsell */}
                 <div>
@@ -801,7 +894,7 @@ const vezesMais = resultados.taxaConversaoAtual > 0 ? benchmarkIdeal / resultado
                 {/* Linha 6: Tráfego e Downsell */}
                 <div>
                   <label className="flex items-center justify-center md:justify-start gap-2 text-[#7ef542] text-sm mb-2">
-                    <Target className="w-4 h-4" /> Investimento em Tráfego (Mensal) <span className="text-red-500">*</span>
+                    <Target className="w-4 h-4" /> Investimento em Tráfego (Mensal)
                   </label>
                   <div className="relative">
                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">R$</span>
@@ -929,9 +1022,11 @@ const vezesMais = resultados.taxaConversaoAtual > 0 ? benchmarkIdeal / resultado
               </div>
               <div className="space-y-6 text-sm text-gray-300">
                 <p className="text-gray-400 text-xs">
-                  Ao informar sua <strong>taxa de conversão real</strong>, realizamos uma engenharia reversa do tráfego
-                  no seu checkout para determinar exatamente quantas pessoas iniciaram a compra e desistiram.
-                </p>
+  No modo detalhado, quanto mais dados você informar, mais preciso fica o diagnóstico.
+  Você pode informar <strong>a taxa do checkout</strong> ou, se preferir, <strong>a quantidade de abandonos no checkout</strong>.
+  Se nenhum dos dois for preenchido, usamos benchmarks (estimativa).
+</p>
+
 
                 <div className="bg-[#7ef542]/5 p-4 rounded-lg border border-[#7ef542]/20 mt-4">
                    <p className="text-xs text-[#7ef542] font-semibold mb-2">Análise de Ecossistema:</p>
@@ -1088,7 +1183,8 @@ const vezesMais = resultados.taxaConversaoAtual > 0 ? benchmarkIdeal / resultado
                     </div>
                     {modoDetalhado ? (
                       <p>
-                        Com sua taxa atual de {resultados.taxaConversaoAtual}%, você precisou de aprox.{" "}
+                        Com a taxa considerada de {resultados.taxaConversaoAtual.toFixed(2).replace(".", ",")}%, você precisou de aprox.
+, você precisou de aprox.{" "}
                         <span className="text-white font-bold">{formatNumber(resultados.totalVisitasEstimadas)} visitas</span> para gerar <span className="text-[#7ef542] font-bold">{resultados.vendas} vendas.
                         </span>
                         
@@ -1382,12 +1478,19 @@ const vezesMais = resultados.taxaConversaoAtual > 0 ? benchmarkIdeal / resultado
                   <h4 className="text-xl font-bold text-[#0a0f0d]">A Ilusão do Tráfego Pago</h4>
                 </div>
                 <div className="space-y-3">
-                  <p className="text-gray-700 text-sm leading-relaxed">
-                    {nomeLead}, você investe <strong>{formatResultCurrency(resultados.investimentoTrafego)}</strong> por mês. Se sua conversão é de <strong>{resultados.taxaConversaoAtual.toFixed(2)}%</strong>, isso significa que <strong>{resultados.ineficienciaTrafego.toFixed(1)}%</strong> do seu capital é gasto apenas para vencer a barreira técnica do checkout.
-                  </p>
-                  <p className="text-gray-600 text-sm leading-relaxed">
-                    Você está pagando um ágio caríssimo para as plataformas de anúncios para compensar leads que já estavam prontos para comprar, mas ficaram pelo caminho.
-                  </p>
+                  {resultados.investimentoTrafego > 0 ? (
+  <p className="text-gray-700 text-sm leading-relaxed">
+    {nomeLead}, você investe <strong>{formatResultCurrency(resultados.investimentoTrafego)}</strong> por mês. Se sua conversão é de{" "}
+    <strong>{resultados.taxaConversaoAtual.toFixed(2)}%</strong>, isso significa que{" "}
+    <strong>{resultados.ineficienciaTrafego.toFixed(1)}%</strong> do seu capital é gasto apenas para vencer a barreira técnica do checkout.
+  </p>
+) : (
+  <p className="text-gray-700 text-sm leading-relaxed">
+    {nomeLead}, você não informou seu investimento em tráfego. Ainda assim, o diagnóstico mostra o tamanho do vazamento no checkout.
+    Se você preencher o investimento, eu consigo calcular também o “pedágio” pago em mídia.
+  </p>
+)}
+
                 </div>
               </div>
 
