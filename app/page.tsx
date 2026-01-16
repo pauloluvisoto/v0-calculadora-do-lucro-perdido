@@ -517,7 +517,7 @@ export default function Page() {
                   <label className="flex items-center justify-center md:justify-start gap-2 text-[#7ef542] text-sm mb-2">
                     <Percent className="w-4 h-4" /> Taxa de Conversão Checkout (%)
                   </label>
-                  <input type="text" value={taxaConversao} onChange={handleTaxaConversaoChange} onKeyPress={handleKeyPress} placeholder="Ex: 15,00" className="w-full bg-[#0a0f0d] border border-[#1a2520] rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#7ef542] transition-colors text-center md:text-left" />
+                  <input type="text" value={taxaConversao} onChange={handleTaxaConversaoChange} onKeyPress={handleKeyPress} placeholder="Ex: 15,00%" className="w-full bg-[#0a0f0d] border border-[#1a2520] rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#7ef542] transition-colors text-center md:text-left" />
                   <p className="text-[10px] text-gray-500 mt-1 text-center md:text-left">
                     Consulte o dashboard da sua plataforma (Hotmart/Kiwify).
                   </p>
