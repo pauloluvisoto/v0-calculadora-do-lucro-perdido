@@ -301,31 +301,36 @@ export default function Page() {
     // ✅ AQUI “LIGA” O FORM: salva no backend (/api/leads)
     // (sem travar a tela; se falhar, só loga no console)
     salvarLead({
-      nome: nomeLead,
-      whatsapp,
-      produto_nome: nomeProduto,
-      produto_tipo: tipoProduto,
-      nicho,
+  // inputs (ok)
+  nome: nomeLead,
+  whatsapp,
+  produto_nome: nomeProduto,
+  produto_tipo: tipoProduto,
+  nicho,
+  faturamento_mensal: fat,
+  ticket_medio: ticket,
+  vendas_realizadas: modoDetalhado ? Number(vendasRealizadas || 0) : null,
+  taxa_conversao_declarada: modoDetalhado ? Number.parseFloat(taxaConversao.replace(",", ".")) : null,
+  investimento_trafego: investimentoAd || null,
+  tem_upsell: temUpsell,
+  valor_upsell: temUpsell ? parseCurrency(valorUpsell) : null,
 
-      faturamento_mensal: fat,
-      ticket_medio: ticket,
+  // faltantes (schema)
+  tem_downsell: temDownsell,
+  valor_downsell: temDownsell ? parseCurrency(valorDownsell) : null,
 
-      modo: modoDetalhado ? "detalhado" : "simplificado",
-      vendas_realizadas: modoDetalhado ? Number(vendasRealizadas || 0) : null,
-      taxa_conversao_declarada: modoDetalhado ? Number.parseFloat(taxaConversao.replace(",", ".")) : null,
-      investimento_trafego: investimentoAd || null,
+  oportunidade_perdida_total: oportunidadePerdidaTotal,
+  perda_principal: perdaPrincipal,
+  perda_upsell_potencial: perdaUpsellPotencial,
+  perda_downsell_potencial: perdaDownsellPotencial,
 
-      tem_upsell: temUpsell,
-      valor_upsell: temUpsell ? parseCurrency(valorUpsell) : null,
+  status_saude: status,
+  ineficiencia_tecnica: ineficiencia,
+  desperdicio_trafego: desperdicio,
 
-      tem_downsell: temDownsell,
-      valor_downsell: temDownsell ? parseCurrency(valorDownsell) : null,
+  projecao_anual_ltv: perdaLTV,
+})
 
-      // opcional, mas ajuda debug/analytics
-      oportunidade_perdida_total: oportunidadePerdidaTotal,
-      carrinhos_abandonados: carrinhosAband,
-      visitas_estimadas: visitasEstimadas,
-    })
 
     setResultados({
       faturamento: fat,
