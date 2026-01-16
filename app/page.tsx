@@ -54,6 +54,12 @@ export default function Page() {
     ticketMedio: number
     vendas: number
     investimentoTrafego: number
+    benchmarkIdeal: number
+    limiteCritico: number
+    limiteExcelente: number
+    faturamentoInformado: number
+    faturamentoCalculado: number
+    diffFaturamentoPct: number
     
     // Breakdown das perdas
     perdaPrincipal: number
@@ -252,6 +258,22 @@ const salvarLead = async (payload: any) => {
     visitasEstimadas = vendas * 4
   }
 
+  // ✅ Benchmark por ticket (usado em Pedágio e Saúde)
+  const benchmarkIdeal = getBenchmarkIdeal(ticket)
+  const limiteCritico = Math.max(benchmarkIdeal - 10, 25)
+  const limiteExcelente = benchmarkIdeal + 15
+
+// ✅ Coerência de faturamento no modo detalhado
+const faturamentoInformado = fat
+const faturamentoCalculado = modoDetalhado ? vendas * ticket : fat
+const diffFaturamentoPct =
+  modoDetalhado && faturamentoCalculado > 0
+    ? (Math.abs(faturamentoInformado - faturamentoCalculado) / faturamentoCalculado) * 100
+    : 0
+
+const fatBase = modoDetalhado ? faturamentoCalculado : fat
+
+
   // 2. Cálculo de Perda Principal (Sempre existe)
   const perdaPrincipal = carrinhosAband * ticket
 
@@ -284,8 +306,6 @@ const salvarLead = async (payload: any) => {
   let ineficiencia = 0
 
   if (investimentoAd > 0) {
-    const benchmarkIdeal = getBenchmarkIdeal(ticket)
-
 if (taxaAtual < benchmarkIdeal) {
   ineficiencia = ((benchmarkIdeal - taxaAtual) / benchmarkIdeal) * 100
   desperdicio = investimentoAd * (ineficiencia / 100)
@@ -295,8 +315,8 @@ if (taxaAtual < benchmarkIdeal) {
   const perdaLTV = oportunidadePerdidaTotal * 12
 
   let status: "Critico" | "Padrao" | "Excelente" = "Padrao"
-  if (taxaAtual < 30) status = "Critico"
-  else if (taxaAtual > 60) status = "Excelente"
+if (taxaAtual < limiteCritico) status = "Critico"
+else if (taxaAtual >= limiteExcelente) status = "Excelente"
 
   // ✅ ALTERAÇÃO #2: Recuperações agora consideram taxa de recuperação (10/20/34)
   // - Produto principal + Upsell em cima das VENDAS RECUPERADAS
@@ -316,7 +336,8 @@ if (taxaAtual < benchmarkIdeal) {
   const recuperacao20 = calcularGanhoRecuperacao(0.2)
   const recuperacao34 = calcularGanhoRecuperacao(0.34)
 
-  const aumentoPercentual = fat > 0 ? (oportunidadePerdidaTotal / fat) * 100 : null
+  const aumentoPercentual = fatBase > 0 ? (oportunidadePerdidaTotal / fatBase) * 100 : null
+
 
   await salvarLead({
     nome: nomeLead,
@@ -353,10 +374,16 @@ if (taxaAtual < benchmarkIdeal) {
   })
 
   setResultados({
-    faturamento: fat,
+    faturamento: fatBase,
+    faturamentoInformado,
+    faturamentoCalculado,
+    diffFaturamentoPct,
     ticketMedio: ticket,
     investimentoTrafego: investimentoAd,
     vendas: vendas,
+    benchmarkIdeal,
+    limiteCritico,
+    limiteExcelente,
     perdaPrincipal: perdaPrincipal,
     perdaUpsellPotencial: perdaUpsellPotencial,
     perdaDownsellPotencial: perdaDownsellPotencial,
@@ -463,8 +490,7 @@ if (taxaAtual < benchmarkIdeal) {
               Agendar com risco zero
             </a>
           </div>
-        </div>
-        {resultados && <StickyCTA />}
+        </div>               
       </div>
     )
   }
@@ -1000,6 +1026,14 @@ const vezesMais = resultados.taxaConversaoAtual > 0 ? benchmarkIdeal / resultado
           <p className="text-lg font-extrabold text-[#7ef542]">+{formatResultCurrency(resultados.recuperacao10.mensal)}</p>
         </div>
       </div>
+      {resultados.diffFaturamentoPct > 15 && (
+  <div className="mt-4 bg-yellow-500/10 border border-yellow-500/20 p-3 rounded-lg text-xs text-yellow-200">
+    Atenção: o faturamento informado ({formatResultCurrency(resultados.faturamentoInformado)}) difere de
+    Vendas × Ticket ({formatResultCurrency(resultados.faturamentoCalculado)}).  
+    Para manter coerência, usamos Vendas × Ticket nos cálculos.
+  </div>
+)}
+{resultados && <StickyCTA />}
     </div>
             {/* 1. Diagnóstico de Saúde (CARD 1 - Com a Explicação de Tráfego) */}
             <div className="bg-[#111816] rounded-2xl p-8 border border-[#1a2520]">
@@ -1025,6 +1059,11 @@ const vezesMais = resultados.taxaConversaoAtual > 0 ? benchmarkIdeal / resultado
                       {resultados.taxaConversaoAtual.toFixed(2).replace(".", ",")}%
                     </span>
                     <span className="text-xs text-gray-400">Conversão</span>
+                    <p className="text-[11px] text-gray-500 mt-1">
+  Benchmark do seu ticket: <span className="text-white font-bold">{resultados.benchmarkIdeal}%</span> •
+  Crítico &lt; <span className="text-red-300 font-bold">{resultados.limiteCritico}%</span> •
+  Excelente ≥ <span className="text-[#7ef542] font-bold">{resultados.limiteExcelente}%</span>
+</p>
                   </div>
                 </div>
                 <div className="overflow-hidden h-2 mb-4 text-xs flex rounded bg-gray-700">
@@ -1344,7 +1383,7 @@ const vezesMais = resultados.taxaConversaoAtual > 0 ? benchmarkIdeal / resultado
                 </div>
                 <div className="space-y-3">
                   <p className="text-gray-700 text-sm leading-relaxed">
-                    {nomeLead}, você investe <strong>{formatResultCurrency(parseCurrency(investimentoTrafego))}</strong> por mês. Se sua conversão é de <strong>{resultados.taxaConversaoAtual.toFixed(2)}%</strong>, isso significa que <strong>{resultados.ineficienciaTrafego.toFixed(1)}%</strong> do seu capital é gasto apenas para vencer a barreira técnica do checkout.
+                    {nomeLead}, você investe <strong>{formatResultCurrency(resultados.investimentoTrafego)}</strong> por mês. Se sua conversão é de <strong>{resultados.taxaConversaoAtual.toFixed(2)}%</strong>, isso significa que <strong>{resultados.ineficienciaTrafego.toFixed(1)}%</strong> do seu capital é gasto apenas para vencer a barreira técnica do checkout.
                   </p>
                   <p className="text-gray-600 text-sm leading-relaxed">
                     Você está pagando um ágio caríssimo para as plataformas de anúncios para compensar leads que já estavam prontos para comprar, mas ficaram pelo caminho.
