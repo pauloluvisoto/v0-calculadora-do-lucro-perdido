@@ -80,10 +80,6 @@ export default function Page() {
     // Dados para os cards
     cenarioUpsell: "sim" | "nao"
     cenarioDownsell: "sim" | "nao"
-    
-    // Para explicação da estimativa
-    baseUpsellEstimada: number
-    baseDownsellEstimada: number
   } | null>(null)
 
   const resultadosRef = useRef<HTMLDivElement>(null)
@@ -166,20 +162,10 @@ export default function Page() {
   }
 
   const handleTaxaConversaoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/[^\d]/g, "")
-    if (!value) {
-      setTaxaConversao("")
-      return
-    }
-    const floatValue = Number(value) / 100
-    if (floatValue > 100) return 
-
-    const formatted = new Intl.NumberFormat("pt-BR", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(floatValue)
-    
-    setTaxaConversao(formatted)
+    const value = e.target.value.replace(/[^\d.,]/g, "")
+    const floatVal = Number.parseFloat(value.replace(",", "."))
+    if (floatVal > 100) return
+    setTaxaConversao(value)
   }
 
   const calcularCampoAutomatico = () => {
@@ -208,7 +194,6 @@ export default function Page() {
   // --- LÓGICA PRINCIPAL DE CÁLCULO ---
 
   const calcular = () => {
-    // Validações Básicas
     if (!nomeLead.trim() || !whatsapp.trim()) {
       alert("Por favor, preencha os campos obrigatórios: Nome e WhatsApp.")
       return
@@ -220,26 +205,6 @@ export default function Page() {
     if (fat <= 0 || ticket <= 0) {
       alert("Preencha faturamento e ticket corretamente.")
       return
-    }
-
-    // Validações Específicas do Modo Detalhado
-    if (modoDetalhado) {
-        if (!taxaConversao) {
-            alert("Por favor, preencha a Taxa de Conversão.")
-            return
-        }
-        if (!investimentoTrafego) {
-            alert("Por favor, preencha o Investimento em Tráfego.")
-            return
-        }
-        if (temUpsell && !valorUpsell) {
-            alert("Por favor, preencha o Valor do Upsell.")
-            return
-        }
-        if (temDownsell && !valorDownsell) {
-             alert("Por favor, preencha o Valor do Downsell.")
-             return
-        }
     }
 
     let vendas: number
@@ -284,8 +249,9 @@ export default function Page() {
     if (valorUpsell) valUpsell = parseCurrency(valorUpsell)
     if (valorDownsell) valDownsell = parseCurrency(valorDownsell)
 
-    // Base de cálculo para Potencial:
-    // Se tem valor, usa o valor. Se não tem, usa estimativa (150% do ticket para up, 30% para down).
+    // Base de cálculo para Potencial (Se não tiver valor, estima)
+    // Upsell = 1.5x do ticket (Mais caro)
+    // Downsell = 0.3x do ticket (Mais barato)
     const upsellBase = (valUpsell > 0) ? valUpsell : (ticket * 1.5) 
     const downsellBase = (valDownsell > 0) ? valDownsell : (ticket * 0.3)
 
@@ -352,8 +318,6 @@ export default function Page() {
       
       cenarioUpsell: temUpsell ? "sim" : "nao",
       cenarioDownsell: temDownsell ? "sim" : "nao",
-      baseUpsellEstimada: upsellBase,
-      baseDownsellEstimada: downsellBase
     })
 
     setTimeout(() => {
@@ -510,7 +474,7 @@ export default function Page() {
                     <Percent className="w-4 h-4" /> Taxa de Conversão Checkout (%) <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
-                    <input type="text" value={taxaConversao} onChange={handleTaxaConversaoChange} onKeyPress={handleKeyPress} placeholder="Ex: 15,00" className="w-full bg-[#0a0f0d] border border-[#1a2520] rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#7ef542] transition-colors text-center md:text-left" />
+                    <input type="text" value={taxaConversao} onChange={handleTaxaConversaoChange} onKeyPress={handleKeyPress} placeholder="Ex: 15,00%" className="w-full bg-[#0a0f0d] border border-[#1a2520] rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#7ef542] transition-colors text-center md:text-left" />
                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500">%</span>
                   </div>
                   <p className="text-[10px] text-gray-500 mt-1 text-center md:text-left">
@@ -850,16 +814,13 @@ export default function Page() {
                     {(resultados.cenarioUpsell === "nao" || resultados.cenarioDownsell === "nao") && (
                        <div className="mt-4 pt-3 border-t border-gray-800 text-[10px] text-gray-500 italic space-y-1 text-left">
                           {resultados.cenarioUpsell === "nao" && (
-                            <p><span className="text-red-400">* Upsell:</span> Valor estimado. Se você tivesse essa oferta, converteria ~20% das vendas recuperadas.</p>
+                            <p><span className="text-red-400">* Upsell:</span> Estimativa baseada em 150% do ticket principal com 20% de conversão sobre recuperados.</p>
                           )}
                           {resultados.cenarioDownsell === "nao" && (
-                            <p><span className="text-red-400">* Downsell:</span> Valor estimado. Se você tivesse essa oferta, recuperaria ~10% dos leads perdidos.</p>
+                            <p><span className="text-red-400">* Downsell:</span> Estimativa baseada em 30% do ticket principal com 10% de conversão sobre perdidos.</p>
                           )}
                        </div>
                     )}
-                    <div className="mt-3 pt-3 border-t border-gray-800 text-[10px] text-gray-500 italic text-left">
-                       <p>* Taxas consideradas: 20% conv. para Upsell (sobre vendas) e 10% conv. para Downsell (sobre abandonos).</p>
-                    </div>
                   </div>
 
                   {resultados.desperdicioTrafego > 0 && (
