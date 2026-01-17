@@ -1019,7 +1019,7 @@ const vezesMais = resultados.taxaConversaoAtual > 0 ? benchmarkIdeal / resultado
               <div className="flex flex-col md:flex-row items-center md:items-start gap-3 mb-4">
                 <AlertTriangle className="w-5 h-5 text-yellow-500 flex-shrink-0 mt-1" />
                 <h4 className="text-lg font-bold text-yellow-500">
-                  Atenção: Diagnóstico de Precisão Baseado em Dados Reais
+                  Atenção: Diagnóstico de Precisão Baseado em Dados Reais do Seu Negócio.   
                 </h4>
               </div>
               <div className="space-y-6 text-sm text-gray-300">
