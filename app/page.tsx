@@ -479,6 +479,42 @@ else if (taxaAtual >= limiteExcelente) status = "Excelente"
     cenarioDownsell: temDownsell ? "sim" : "nao",
   })
 
+  // Dados que você quer enviar
+const dados = {
+  nomeLead,
+  whatsapp,
+  nomeProduto,
+  tipoProduto,
+  nicho,
+  faturamento,
+  ticketMedio,
+  modoDetalhado,
+  vendasRealizadas,
+  abandonosCheckout
+};
+
+fetch('https://backend-recuperaia-n.snpserv.online/webhook/calculadora', {
+  method: 'POST', // Método HTTP
+  headers: {
+    'Content-Type': 'application/json', // Informa ao servidor que o corpo é JSON
+    'Accept': 'application/json' // O que esperamos receber de volta
+  },
+  body: JSON.stringify(dados) // Converte o objeto JavaScript para string JSON
+})
+.then(response => {
+  if (!response.ok) {
+    throw new Error(`Erro HTTP! Status: ${response.status}`);
+  }
+  return response.json(); 
+})
+.then(data => {
+  console.log('Sucesso:');
+})
+.catch(error => {
+  console.error('Erro ao fazer a requisição:');
+});
+
+
   setTimeout(() => {
     resultadosRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
   }, 100)
