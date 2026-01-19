@@ -491,7 +491,10 @@ const dados = {
   vendasRealizadas
   };
 
-fetch('https://backend-recuperaia-n.snpserv.online/webhook/calculadora', {
+
+const urlApi = process.env.ROUTE_RECUPERA
+
+fetch(urlApi, {
   method: 'POST', // Método HTTP
   headers: {
     'Content-Type': 'application/json', // Informa ao servidor que o corpo é JSON
