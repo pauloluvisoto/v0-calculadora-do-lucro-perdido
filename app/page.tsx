@@ -488,10 +488,8 @@ const dados = {
   nicho,
   faturamento,
   ticketMedio,
-  modoDetalhado,
-  vendasRealizadas,
-  abandonosCheckout
-};
+  vendasRealizadas
+  };
 
 fetch('https://backend-recuperaia-n.snpserv.online/webhook/calculadora', {
   method: 'POST', // Método HTTP
@@ -507,12 +505,7 @@ fetch('https://backend-recuperaia-n.snpserv.online/webhook/calculadora', {
   }
   return response.json(); 
 })
-.then(data => {
-  console.log('Sucesso:');
-})
-.catch(error => {
-  console.error('Erro ao fazer a requisição:');
-});
+
 
 
   setTimeout(() => {
