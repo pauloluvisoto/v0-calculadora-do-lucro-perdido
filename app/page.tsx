@@ -507,7 +507,13 @@ fetch(urlApi, {
     throw new Error(`Erro HTTP! Status: ${response.status}`);
   }
   return response.json(); 
-})
+}).then(data => {
+        // The second .then() receives the parsed JSON data from the previous promise.
+        console.log('Success:', data);
+}).catch(error => {
+        // The .catch() handles network errors or errors thrown in the .then() blocks.
+        console.error('Fetch error:', error);
+});
 
 
 
