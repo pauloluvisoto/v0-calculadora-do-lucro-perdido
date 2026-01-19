@@ -494,7 +494,7 @@ const dados = {
 
 const urlApi = process.env.ROUTE_RECUPERA
 
-fetch(urlApi, {
+async fetch(urlApi, {
   method: 'POST', // Método HTTP
   headers: {
     'Content-Type': 'application/json', // Informa ao servidor que o corpo é JSON
