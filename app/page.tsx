@@ -479,44 +479,6 @@ else if (taxaAtual >= limiteExcelente) status = "Excelente"
     cenarioDownsell: temDownsell ? "sim" : "nao",
   })
 
-  // Dados que você quer enviar
-const dados = {
-  nomeLead,
-  whatsapp,
-  nomeProduto,
-  tipoProduto,
-  nicho,
-  faturamento,
-  ticketMedio,
-  vendasRealizadas
-  };
-
-
-const urlApi = process.env.ROUTE_RECUPERA
-
-await fetch(urlApi, {
-  method: 'POST', // Método HTTP
-  headers: {
-    'Content-Type': 'application/json', // Informa ao servidor que o corpo é JSON
-    'Accept': 'application/json' // O que esperamos receber de volta
-  },
-  body: JSON.stringify(dados) // Converte o objeto JavaScript para string JSON
-})
-.then(response => {
-  if (!response.ok) {
-    throw new Error(`Erro HTTP! Status: ${response.status}`);
-  }
-  return response.json(); 
-}).then(data => {
-        // The second .then() receives the parsed JSON data from the previous promise.
-        console.log('Success:', data);
-}).catch(error => {
-        // The .catch() handles network errors or errors thrown in the .then() blocks.
-        console.error('Fetch error:', error);
-});
-
-
-
   setTimeout(() => {
     resultadosRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
   }, 100)
